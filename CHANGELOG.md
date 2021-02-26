@@ -1,3 +1,7 @@
+# 1.1.0
+
+UI improved.
+
 # 1.0.1
 
 Fixed some style-related things.
