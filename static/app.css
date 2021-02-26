@@ -5,9 +5,8 @@ body {
   color: black !important;
   padding: 1px;
 }
-span {
-  vertical-align: baseline !important;
-}
-del {
+span,
+del,
+ins {
   vertical-align: baseline !important;
 }
