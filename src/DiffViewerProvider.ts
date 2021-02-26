@@ -1,4 +1,4 @@
-import { Diff2HtmlConfig, html, parse } from "diff2html";
+import { Diff2HtmlConfig, parse } from "diff2html";
 import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
 import * as path from "path";
 import * as vscode from "vscode";
@@ -47,16 +47,20 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
       return;
     }
 
-    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, html(diffFiles, config));
+    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+
+    webviewPanel.webview.postMessage({
+      type: "init",
+      config: config,
+      diffFiles: diffFiles,
+      destination: "app",
+    });
   }
 
-  private getHtmlForWebview(webview: vscode.Webview, diffContent: string): string {
-    const styleResetUri = webview.asWebviewUri(
-      vscode.Uri.file(path.join(this.context.extensionPath, "static", "reset.css"))
-    );
-    const styleAppUri = webview.asWebviewUri(
-      vscode.Uri.file(path.join(this.context.extensionPath, "static", "app.css"))
-    );
+  private getHtmlForWebview(webview: vscode.Webview): string {
+    const appJsUri = webview.asWebviewUri(this.resolveStaticFile("app.js"));
+    const appCssUri = webview.asWebviewUri(this.resolveStaticFile("app.css"));
+    const resetCssUri = webview.asWebviewUri(this.resolveStaticFile("reset.css"));
 
     return /* html */ `
       <!DOCTYPE html>
@@ -66,14 +70,21 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <link href="${styleResetUri}" rel="stylesheet" />
-				<link href="${styleAppUri}" rel="stylesheet" />
+        <link href="${resetCssUri}" rel="stylesheet" />
+				<link href="${appCssUri}" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/github.min.css" />
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
       </head>
       <body>
-        ${diffContent}
+        <div id="app"></div>
+        <script src="${appJsUri}"></script>
       </body>
       </html>`;
+  }
+
+  private resolveStaticFile(filename: string): vscode.Uri {
+    return vscode.Uri.file(path.join(this.context.extensionPath, "static", filename));
   }
 
   private extractConfig(): Diff2HtmlConfig {
