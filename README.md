@@ -13,13 +13,13 @@ A simple wrapper for [diff2html](https://github.com/rtfpessoa/diff2html) library
 ### Without the extension:
 
 <p align="center">
-  <a href="documentation/original.png"><img src="documentation/original.png" width="700"></a>
+  <img src="documentation/original.png" width="700">
 </p>
 
 ### With the extension:
 
 <p align="center">
-  <a href="documentation/demo.png"><img src="documentation/demo.png" width="700"></a>
+  <img src="documentation/demo.png" width="700">
 </p>
 
 ## Contribute
