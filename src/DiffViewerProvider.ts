@@ -1,5 +1,6 @@
 import { Diff2HtmlConfig, html, parse } from "diff2html";
 import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
+import * as path from "path";
 import * as vscode from "vscode";
 import { DiffDocument } from "./DiffDocument";
 
@@ -50,20 +51,23 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
   }
 
   private getHtmlForWebview(webview: vscode.Webview, diffContent: string): string {
+    const styleResetUri = webview.asWebviewUri(
+      vscode.Uri.file(path.join(this.context.extensionPath, "static", "reset.css"))
+    );
+    const styleAppUri = webview.asWebviewUri(
+      vscode.Uri.file(path.join(this.context.extensionPath, "static", "app.css"))
+    );
+
     return /* html */ `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <title></title>
         <meta charset="UTF-8">
-        <style>
-          body {
-            background-color: #fff !important;
-            color: #000 !important;
-          }
-        </style>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link href="${styleResetUri}" rel="stylesheet" />
+				<link href="${styleAppUri}" rel="stylesheet" />
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
       </head>
       <body>

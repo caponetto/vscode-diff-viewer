@@ -1,0 +1,13 @@
+html,
+body {
+  height: 100%;
+  background-color: white !important;
+  color: black !important;
+  padding: 1px;
+}
+span {
+  vertical-align: baseline !important;
+}
+del {
+  vertical-align: baseline !important;
+}
