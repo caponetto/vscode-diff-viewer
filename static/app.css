@@ -5,8 +5,15 @@ body {
   color: black !important;
   padding: 1px;
 }
-span,
 del,
 ins {
   vertical-align: baseline !important;
+}
+
+.d2h-code-line-ctn {
+  vertical-align: baseline !important;
+}
+
+.d2h-code-line-prefix {
+  vertical-align: top;
 }
