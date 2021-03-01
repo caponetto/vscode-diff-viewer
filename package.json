@@ -9,6 +9,9 @@
     "type": "git",
     "url": "https://github.com/caponetto/vscode-diff-viewer.git"
   },
+  "bugs": {
+     "url": "https://github.com/caponetto/vscode-diff-viewer/issues"
+  }
   "engines": {
     "vscode": "^1.46.0"
   },
