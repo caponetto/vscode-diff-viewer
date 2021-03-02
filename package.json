@@ -2,7 +2,7 @@
   "name": "vscode-diff-viewer",
   "displayName": "Diff Viewer",
   "description": "Visualize git diff files in VS Code",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "license": "MIT",
   "publisher": "caponetto",
   "repository": {
@@ -131,7 +131,7 @@
     "watch": "yarn build-extension"
   },
   "dependencies": {
-    "diff2html": "3.4.9"
+    "diff2html": "3.4.10"
   },
   "devDependencies": {
     "@types/node": "16.3.3",
