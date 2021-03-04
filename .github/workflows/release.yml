@@ -2,14 +2,14 @@ name: "Release"
 
 on:
   release:
-    types: [ published ]
+    types: [published]
 
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get release
+      - name: "Get release"
         id: get_release
         uses: bruceadams/get-release@v1.2.2
         env:
@@ -20,16 +20,11 @@ jobs:
           fetch-depth: 0
           ref: ${{ steps.get_release.outputs.tag_name }}
 
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16
+      - name: "Setup environment"
+        uses: ./.github/actions/setup-env
 
-      - name: Setup Yarn
-        run: npm install -g yarn@1.22.5
-
-      - name: Build
-        run: yarn install && yarn run prod
+      - name: "Build and Pack"
+        run: yarn build:prod && yarn pack:extension
 
       - name: "Publish :: VS Code Marketplace"
         run: |

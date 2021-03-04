@@ -25,9 +25,11 @@ A simple wrapper for [diff2html](https://github.com/rtfpessoa/diff2html) library
 </p>
 
 ## Contribute
+
 All contributions are welcome, so don't hesitate to submit a pull request. ;-)
 
 ## License
+
 This code is released under MIT License.
 
 Check [LICENSE](LICENSE) file for more information.
