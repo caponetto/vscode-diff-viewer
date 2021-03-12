@@ -1,3 +1,7 @@
+# 1.1.7
+
+Bump dependencies & enable browser in `package.json`
+
 # 1.1.6
 
 Bump dependencies
