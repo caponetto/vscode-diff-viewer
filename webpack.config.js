@@ -1,14 +1,11 @@
 const path = require("path");
 
 const commonConfig = {
-  mode: "development",
-  devtool: "inline-source-map",
+  devtool: "source-map",
   output: {
     path: path.resolve(__dirname, "./dist"),
     filename: "[name].js",
-    library: "DiffViewer",
-    libraryTarget: "umd",
-    umdNamedDefine: true,
+    libraryTarget: "commonjs",
   },
   externals: {
     vscode: "commonjs vscode",
@@ -24,13 +21,16 @@ const commonConfig = {
   resolve: {
     extensions: [".tsx", ".ts", ".js", ".jsx"],
     modules: [path.resolve("./node_modules"), path.resolve("./src")],
+    fallback: {
+      path: require.resolve("path-browserify"),
+      fs: false,
+    },
   },
 };
 
 module.exports = async (_argv) => [
   {
     ...commonConfig,
-    target: "node",
     entry: {
       extension: "./src/extension.ts",
     },
