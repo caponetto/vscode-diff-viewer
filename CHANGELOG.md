@@ -1,3 +1,6 @@
+# 1.1.10
+Decode the file content properly
+
 # 1.1.9
 Add support for *.patch files
 

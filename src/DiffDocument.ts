@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 
 export class DiffDocument implements vscode.CustomDocument {
   private readonly _onDidDispose = new vscode.EventEmitter<void>();
+  private static readonly decoder = new TextDecoder("utf-8");
   public readonly onDidDispose = this._onDidDispose.event;
 
   get filename(): string {
@@ -18,6 +19,6 @@ export class DiffDocument implements vscode.CustomDocument {
 
   public static async create(uri: vscode.Uri): Promise<DiffDocument | PromiseLike<DiffDocument>> {
     const fileData = await vscode.workspace.fs.readFile(uri);
-    return new DiffDocument(uri, fileData.toString());
+    return new DiffDocument(uri, this.decoder.decode(fileData));
   }
 }
