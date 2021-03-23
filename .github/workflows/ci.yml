@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  push:
+    branches: [main]
+  pull_request:
+    branches: "**"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node:
+          - 14
+        yarn: [1.22.5]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Output version
+        id: version
+        run: |
+          echo ::set-output name=version::$(node -e "console.log(require('./package.json').version);")
+        shell: bash
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Setup Yarn
+        run: npm install -g yarn@${{ matrix.yarn }}
+
+      - name: Download dependencies
+        run: yarn install
+
+      - name: "Build :: prod and pack"
+        run: yarn run prod
+
+      - name: Upload VS Code Extension
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: vscode_diff_viewer_${{ steps.version.outputs.version }}
+          path: dist/vscode_diff_viewer_${{ steps.version.outputs.version }}.vsix

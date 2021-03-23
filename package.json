@@ -1,0 +1,120 @@
+{
+  "name": "vscode-diff-viewer",
+  "displayName": "Diff Viewer",
+  "description": "Visualize git diff files in VS Code",
+  "version": "1.0.0",
+  "license": "MIT",
+  "publisher": "caponetto",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caponetto/vscode-diff-viewer.git"
+  },
+  "engines": {
+    "vscode": "^1.46.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "diff",
+    "differences",
+    "git",
+    "viewer",
+    "comparison"
+  ],
+  "icon": "icon.png",
+  "activationEvents": [
+    "onCustomEditor:diffViewer"
+  ],
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "diffViewer",
+        "displayName": "Diff Viewer",
+        "selector": [
+          {
+            "filenamePattern": "*.diff"
+          }
+        ]
+      }
+    ],
+    "configuration": [
+      {
+        "title": "DiffViewer",
+        "properties": {
+          "diffviewer.outputFormat": {
+            "type": "string",
+            "default": "line-by-line",
+            "enum": [
+              "line-by-line",
+              "side-by-side"
+            ],
+            "description": "The format of the output data"
+          },
+          "diffviewer.drawFileList": {
+            "type": "boolean",
+            "default": true,
+            "description": "Show a file list before the diff"
+          },
+          "diffviewer.matching": {
+            "type": "string",
+            "default": "none",
+            "enum": [
+              "word",
+              "chat",
+              "none"
+            ],
+            "description": "Matching level"
+          },
+          "diffviewer.matchWordsThreshold": {
+            "type": "number",
+            "default": 0.25,
+            "description": "Similarity threshold for word matching"
+          },
+          "diffviewer.matchingMaxComparisons": {
+            "type": "integer",
+            "default": 2500,
+            "description": "Perform at most this much comparisons for line matching a block of changes"
+          },
+          "diffviewer.maxLineSizeInBlockForComparison": {
+            "type": "integer",
+            "default": 200,
+            "description": "Maximum number os characters of the bigger line in a block to apply comparison"
+          },
+          "diffviewer.maxLineLengthHighlight": {
+            "type": "integer",
+            "default": 10000,
+            "description": "Only perform diff changes highlight if lines are smaller than this"
+          },
+          "diffviewer.renderNothingWhenEmpty": {
+            "type": "boolean",
+            "default": false,
+            "description": "Render nothing if the diff shows no change in its comparison"
+          }
+        }
+      }
+    ]
+  },
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build-extension": "rm -rf dist && webpack --mode production --devtool none",
+    "pack-extension": "vsce package --yarn -o ./dist/vscode_diff_viewer_$npm_package_version.vsix",
+    "prod": "yarn build-extension && yarn pack-extension",
+    "compile": "yarn build-extension",
+    "watch": "yarn build-extension"
+  },
+  "dependencies": {
+    "diff2html": "3.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "14.14.31",
+    "@types/vscode": "^1.46.0",
+    "ts-loader": "8.0.17",
+    "typescript": "4.1.5",
+    "vsce": "1.85.0",
+    "webpack": "^4.44.1",
+    "webpack-cli": "3.3.10",
+    "prettier": "2.2.1",
+    "tslint-config-prettier": "1.18.0"
+  }
+}
