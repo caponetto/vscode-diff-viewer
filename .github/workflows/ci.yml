@@ -57,5 +57,5 @@ jobs:
         with:
           released_artifact_name: vscode_diff_viewer
           artifact_path: dist/vscode_diff_viewer_${{ steps.version.outputs.version }}.vsix
-          max_increase_percentage: 10
+          max_increase_percentage: 60
 
