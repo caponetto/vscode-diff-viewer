@@ -43,7 +43,14 @@ jobs:
 
       - name: "Build :: prod and pack"
         run: yarn run prod
-      
+
+      - name: Upload VS Code Extension
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v2
+        with:
+          name: vscode_diff_viewer_${{ steps.version.outputs.version }}
+          path: dist/vscode_diff_viewer_${{ steps.version.outputs.version }}.vsix
+    
       - name: Less is more
         if: matrix.os == 'ubuntu-latest'
         uses: caponetto/less-is-more@v0.0.2
@@ -52,9 +59,3 @@ jobs:
           artifact_path: dist/vscode_diff_viewer_${{ steps.version.outputs.version }}.vsix
           max_increase_percentage: 10
 
-      - name: Upload VS Code Extension
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v2
-        with:
-          name: vscode_diff_viewer_${{ steps.version.outputs.version }}
-          path: dist/vscode_diff_viewer_${{ steps.version.outputs.version }}.vsix
