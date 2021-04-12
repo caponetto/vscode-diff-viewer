@@ -1,4 +1,4 @@
-name: less-is-more
+name: Artifact size validation
 
 on:
   pull_request:
