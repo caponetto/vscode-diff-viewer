@@ -1,0 +1,42 @@
+name: Artifact size validation
+
+on:
+  pull_request:
+    branches: "**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Output version
+        id: version
+        run: |
+          echo ::set-output name=version::$(node -e "console.log(require('./package.json').version);")
+        shell: bash
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: Setup Yarn
+        run: npm install -g yarn@1.22.5
+
+      - name: Download dependencies
+        run: yarn install
+
+      - name: "Build :: prod and pack"
+        run: yarn run prod
+
+      - name: Less is more
+        uses: caponetto/less-is-more@v0.0.5
+        with:
+          released_artifact_name: vscode_diff_viewer
+          artifact_path: "**/vscode_diff_viewer_*.vsix"
+          max_increase_percentage: 10
+          github_token: ${{ secrets.BASIC_TOKEN }}
