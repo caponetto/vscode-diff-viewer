@@ -34,9 +34,10 @@ jobs:
         run: yarn run prod
 
       - name: Less is more
-        uses: caponetto/less-is-more@v0.0.5
+        uses: caponetto/less-is-more@v0.0.7
         with:
           released_artifact_name: vscode_diff_viewer
           artifact_path: "**/vscode_diff_viewer_*.vsix"
           max_increase_percentage: 10
           github_token: ${{ secrets.BASIC_TOKEN }}
+          fail_execution: false
