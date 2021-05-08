@@ -42,6 +42,7 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
     const diffFiles = parse(document.content, config);
 
     if (diffFiles.length === 0) {
+      webviewPanel.dispose();
       vscode.window.showInformationMessage(`No diff structure found in ${document.filename}.`);
       vscode.commands.executeCommand("vscode.openWith", document.uri, "default");
       return;
