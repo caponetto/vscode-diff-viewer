@@ -1,3 +1,7 @@
+# 1.1.2
+
+Minor fixes
+
 # 1.1.1
 
 Fixed some minor style-related things
