@@ -45,5 +45,5 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v2
         with:
-          name: vscode_diff_viewer_${{ steps.version.outputs.version }}
-          path: dist/vscode_diff_viewer_${{ steps.version.outputs.version }}.vsix
+          name: vscode_diff_viewer_v${{ steps.version.outputs.version }}
+          path: dist/vscode_diff_viewer_v${{ steps.version.outputs.version }}.vsix
