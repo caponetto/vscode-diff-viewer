@@ -31,16 +31,6 @@ jobs:
       - name: Build
         run: yarn install && yarn run prod
 
-      - name: Upload VS Code extension
-        uses: actions/upload-release-asset@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.BASIC_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
-          asset_name: vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
-          asset_content_type: application/octet-stream
-
       - name: "Publish :: VS Code Marketplace"
         run: |
           npm install -g vsce
