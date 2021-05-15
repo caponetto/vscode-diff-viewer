@@ -37,16 +37,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.BASIC_TOKEN }}
         with:
           upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
+          asset_path: ./dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
           asset_name: vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
           asset_content_type: application/octet-stream
 
       - name: "Publish :: VS Code Marketplace"
         run: |
           npm install -g vsce
-          vsce publish -p ${{ secrets.VSCODE_MP_TOKEN }} --packagePath dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
+          vsce publish -p ${{ secrets.VSCODE_MP_TOKEN }} --packagePath ./dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
 
       - name: "Publish :: Open VSX Registry"
         run: |
           npm install -g ovsx
-          ovsx publish -p ${{ secrets.OPEN_VSX_TOKEN }} dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
+          ovsx publish -p ${{ secrets.OPEN_VSX_TOKEN }} ./dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
