@@ -1,3 +1,7 @@
+# 1.1.4
+
+Support VS Code Workspace Trust
+
 # 1.1.3
 
 -
