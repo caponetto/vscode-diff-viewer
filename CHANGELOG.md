@@ -1,3 +1,7 @@
+# 1.1.5
+
+Bump dependencies
+
 # 1.1.4
 
 Support VS Code Workspace Trust
