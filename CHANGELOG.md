@@ -1,3 +1,7 @@
+# 1.1.6
+
+Bump dependencies
+
 # 1.1.5
 
 Bump dependencies
