@@ -113,7 +113,7 @@
     "watch": "yarn build-extension"
   },
   "dependencies": {
-    "diff2html": "3.4.8"
+    "diff2html": "3.4.9"
   },
   "devDependencies": {
     "@types/node": "16.3.3",
