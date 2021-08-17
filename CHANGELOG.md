@@ -1,3 +1,7 @@
+# 1.1.8
+
+Add `path-browserify` as fallback and more adjustments for browser
+
 # 1.1.7
 
 Bump dependencies & enable browser in `package.json`
