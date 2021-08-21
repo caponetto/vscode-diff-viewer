@@ -12,8 +12,8 @@
     {
       "name": "Launch vscode-extension (web)",
       "type": "pwa-extensionHost",
-      "debugWebWorkerHost": true,
       "request": "launch",
+      "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}", "--extensionDevelopmentKind=web"],
       "outFiles": ["${workspaceRoot}/dist/**/*.js"],
     }
