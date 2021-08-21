@@ -1,3 +1,6 @@
+# 1.1.11
+Fix meta tags
+
 # 1.1.10
 Decode the file content properly
 
