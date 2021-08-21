@@ -1,3 +1,6 @@
+# 1.1.9
+Add support for *.patch files
+
 # 1.1.8
 
 Add `path-browserify` as fallback and more adjustments for browser

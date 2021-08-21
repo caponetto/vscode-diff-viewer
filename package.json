@@ -2,7 +2,7 @@
   "name": "vscode-diff-viewer",
   "displayName": "Diff Viewer",
   "description": "Visualize git diff files in VS Code",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "license": "MIT",
   "publisher": "caponetto",
   "repository": {
@@ -46,8 +46,21 @@
         "displayName": "Diff Viewer",
         "selector": [
           {
-            "filenamePattern": "*.diff"
+            "filenamePattern": "*.{diff,patch}"
           }
+        ]
+      }
+    ],
+    "languages": [
+      {
+        "id": "diff",
+        "extensions": [
+          ".diff",
+          ".patch"
+        ],
+        "aliases": [
+          "diff",
+          "patch"
         ]
       }
     ],
@@ -113,6 +126,7 @@
   "scripts": {
     "build-extension": "rm -rf dist && webpack --mode production",
     "pack-extension": "vsce package --yarn -o ./dist/vscode_diff_viewer_v$npm_package_version.vsix --githubBranch main",
+    "dev": "rm -rf dist && webpack --mode development",
     "prod": "yarn build-extension && yarn pack-extension",
     "compile": "yarn build-extension",
     "watch": "yarn build-extension"
