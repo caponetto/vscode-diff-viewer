@@ -1,3 +1,6 @@
+# 1.1.12
+Simplify webpack config and use vscode joinPath
+
 # 1.1.11
 Fix meta tags
 

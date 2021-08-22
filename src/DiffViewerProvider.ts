@@ -1,6 +1,5 @@
 import { Diff2HtmlConfig, parse } from "diff2html";
 import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
-import * as path from "path";
 import * as vscode from "vscode";
 import { DiffDocument } from "./DiffDocument";
 
@@ -70,7 +69,7 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
         <title></title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval'; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * 'unsafe-inline'; img-src * data: blob: 'unsafe-inline'; frame-src *; style-src * 'unsafe-inline'; worker-src * data: 'unsafe-inline' 'unsafe-eval'; font-src * 'unsafe-inline' 'unsafe-eval';">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link href="${resetCssUri}" rel="stylesheet" />
 				<link href="${appCssUri}" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/github.min.css" />
@@ -85,7 +84,7 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
   }
 
   private resolveStaticFile(filename: string): vscode.Uri {
-    return vscode.Uri.file(path.join(this.context.extensionPath, "static", filename));
+    return vscode.Uri.joinPath(this.context.extensionUri, "static", filename);
   }
 
   private extractConfig(): Diff2HtmlConfig {
