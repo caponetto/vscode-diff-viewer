@@ -28,8 +28,7 @@
   "icon": "icon.png",
   "extensionKind": [
     "ui",
-    "workspace",
-    "web"
+    "workspace"
   ],
   "activationEvents": [
     "onCustomEditor:diffViewer"
