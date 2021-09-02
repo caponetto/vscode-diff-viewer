@@ -1,14 +1,24 @@
+# 1.1.13
+
+Fix `Viewed` toggle when side-by-side is set
+
+Remove web extension kind
+
 # 1.1.12
+
 Simplify webpack config and use vscode joinPath
 
 # 1.1.11
+
 Fix meta tags
 
 # 1.1.10
+
 Decode the file content properly
 
 # 1.1.9
-Add support for *.patch files
+
+Add support for \*.patch files
 
 # 1.1.8
 
