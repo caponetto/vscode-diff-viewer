@@ -2,20 +2,22 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch vscode-extension",
+      "name": "Launch extension (desktop)",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
-      "outFiles": ["${workspaceRoot}/dist/**/*.js"]
+      "outFiles": ["${workspaceRoot}/dist/**/*.js"],
+      "preLaunchTask": "npm: watch"
     },
     {
-      "name": "Launch vscode-extension (web)",
+      "name": "Launch extension (web)",
       "type": "pwa-extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}", "--extensionDevelopmentKind=web"],
       "outFiles": ["${workspaceRoot}/dist/**/*.js"],
+      "preLaunchTask": "npm: watch"
     }
   ]
 }
