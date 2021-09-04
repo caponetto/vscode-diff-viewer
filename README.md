@@ -8,7 +8,7 @@
 
 A simple wrapper for [diff2html](https://github.com/rtfpessoa/diff2html) library to easily visualize git diff files in the VS Code.
 
-**Note**: The file extension must be `.diff` to be properly loaded by VS Code.
+**Note**: The file extension must be `.diff` or `.patch` to be properly loaded by VS Code.
 
 ## Demo
 
