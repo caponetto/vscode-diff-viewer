@@ -1,6 +1,6 @@
 # Diff Viewer extension for VS Code
 
-![vs-code-marketplace-version](https://img.shields.io/visual-studio-marketplace/v/caponetto.vscode-diff-viewer.svg?color=purple)
+![vs-code-marketplace-version](https://img.shields.io/visual-studio-marketplace/v/caponetto.vscode-diff-viewer.svg?color=purple&label=release)
 ![vs-code-marketplace-installs](https://img.shields.io/visual-studio-marketplace/i/caponetto.vscode-diff-viewer.svg?color=red)
 ![vs-code-support](https://img.shields.io/badge/Visual%20Studio%20Code-1.46.0+-blue.svg)
 ![github-ci](https://github.com/caponetto/vscode-diff-viewer/workflows/CI/badge.svg)
