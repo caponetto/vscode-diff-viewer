@@ -24,7 +24,7 @@ jobs:
         run: yarn build:prod && yarn pack:extension
 
       - name: "Less is more"
-        uses: caponetto/less-is-more@v0.0.7
+        uses: caponetto/less-is-more@v1
         with:
           released_artifact_name: vscode_diff_viewer
           artifact_path: "**/vscode_diff_viewer_*.vsix"
