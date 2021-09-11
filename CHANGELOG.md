@@ -1,3 +1,7 @@
+# 1.1.14
+
+Codebase improvements
+
 # 1.1.13
 
 Fix `Viewed` toggle when side-by-side is set
