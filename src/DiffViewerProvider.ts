@@ -25,7 +25,7 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
   }
 
   public async resolveCustomEditor(
-    document: DiffDocument,
+    diffDocument: DiffDocument,
     webviewPanel: vscode.WebviewPanel,
     token: vscode.CancellationToken
   ): Promise<void> {
@@ -38,12 +38,12 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
     };
 
     const config = this.extractConfig();
-    const diffFiles = parse(document.content, config);
+    const diffFiles = parse(diffDocument.content, config);
 
     if (diffFiles.length === 0) {
       webviewPanel.dispose();
-      vscode.window.showInformationMessage(`No diff structure found in ${document.filename}.`);
-      vscode.commands.executeCommand("vscode.openWith", document.uri, "default");
+      vscode.window.showInformationMessage(`No diff structure found in ${diffDocument.filename}.`);
+      vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
       return;
     }
 
@@ -72,7 +72,7 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link href="${resetCssUri}" rel="stylesheet" />
 				<link href="${appCssUri}" rel="stylesheet" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/github.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
       </head>
