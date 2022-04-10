@@ -31,5 +31,9 @@ module.exports = async (_argv) => [
     entry: {
       extension: "./src/extension.ts",
     },
+    performance: {
+      maxEntrypointSize: 1024 * 1024 * 1,
+      maxAssetSize: 1024 * 1024 * 1,
+    },
   },
 ];

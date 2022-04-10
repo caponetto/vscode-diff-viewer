@@ -7,14 +7,8 @@ runs:
     - name: "Setup :: Node"
       uses: actions/setup-node@v2
       with:
-        node-version: 16.2.0
+        node-version: 16.13.2
         cache: "yarn"
-
-    - name: "Setup :: Yarn"
-      shell: bash
-      run: |
-        npm install -g yarn@1.22.10
-        yarn config set network-timeout 1000000
 
     - name: "Bootstrap"
       shell: bash
@@ -26,11 +20,6 @@ runs:
       run: |
         git diff yarn.lock;
         [ "0" == "$(git diff yarn.lock | wc -l | tr -d ' ')" ]
-
-    - name: "Check :: dependencies mismatches"
-      shell: bash
-      run: |
-        npx --yes syncpack list-mismatches
 
     - name: "Check :: format"
       shell: bash
