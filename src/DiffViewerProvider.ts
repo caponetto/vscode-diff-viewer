@@ -21,7 +21,7 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
     _openContext: vscode.CustomDocumentOpenContext,
     _token: vscode.CancellationToken
   ): Promise<DiffDocument> {
-    return await DiffDocument.create(uri);
+    return DiffDocument.create(uri);
   }
 
   public async resolveCustomEditor(

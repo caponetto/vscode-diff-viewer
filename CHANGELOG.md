@@ -1,3 +1,7 @@
+# 1.2.0
+
+Update dependencies and fix encoding issue
+
 # 1.1.14
 
 Codebase improvements

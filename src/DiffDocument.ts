@@ -1,9 +1,9 @@
+import * as chardet from "chardet";
 import * as path from "path";
 import * as vscode from "vscode";
 
 export class DiffDocument implements vscode.CustomDocument {
   private readonly _onDidDispose = new vscode.EventEmitter<void>();
-  private static readonly decoder = new TextDecoder("utf-8");
   public readonly onDidDispose = this._onDidDispose.event;
 
   get filename(): string {
@@ -19,6 +19,8 @@ export class DiffDocument implements vscode.CustomDocument {
 
   public static async create(uri: vscode.Uri): Promise<DiffDocument | PromiseLike<DiffDocument>> {
     const fileData = await vscode.workspace.fs.readFile(uri);
-    return new DiffDocument(uri, this.decoder.decode(fileData));
+    const encoding = chardet.detect(fileData);
+    const decoder = new TextDecoder(encoding ?? "utf-8");
+    return new DiffDocument(uri, decoder.decode(fileData));
   }
 }
