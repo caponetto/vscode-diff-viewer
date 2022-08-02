@@ -111,6 +111,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       </head>
       <body>
         <div id="app"></div>
+        <footer id="count"></footer>
         <script src="${appJsUri}"></script>
       </body>
       </html>`;
