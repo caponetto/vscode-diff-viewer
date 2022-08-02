@@ -1,6 +1,6 @@
 import { Diff2HtmlConfig, parse } from "diff2html";
 import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
-import { parseHexBitmap, bitmapToHex } from "./hex-bitmap";
+import { getViewedFiles, updateViewedFiles } from "./viewed-diff";
 import * as vscode from "vscode";
 
 export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
@@ -60,9 +60,15 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       });
     }
 
+    interface FileViewedMessage {
+      command: 'reportFileViewed',
+      index: number,
+      viewed: boolean,
+    }
+
     const messageReceiverSubscription = webviewPanel.webview.onDidReceiveMessage((message: FileViewedMessage) => {
       const eol = diffDocument.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
-      const edited = updateViewedFiles(diffDocument.getText(), message, eol);
+      const edited = updateViewedFiles(diffDocument.getText(), message.index, message.viewed, eol);
 
       oldContent = edited;
 
@@ -145,40 +151,3 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     };
   }
 }
-
-interface FileViewedMessage {
-  command: 'reportFileViewed',
-  index: number,
-  viewed: boolean,
-}
-
-const VIEWED_RE = /(^|\n)viewed\s+([0-9a-f]+)(\s.*)\s*($|\n)/i;
-const VIEWED_HEX_POS = 2; // capturing group index
-
-function  getViewedFiles(content: string): boolean[] {
-  const viewedMatch = VIEWED_RE.exec(content);
-  const viewed = viewedMatch?.[VIEWED_HEX_POS]?.trim();
-  if (viewed) {
-    return parseHexBitmap(viewed);
-  }
-  return [];
-}
-
-function updateViewedFiles(content: string, update: FileViewedMessage, eol: string): string {
-  const viewedMatch = VIEWED_RE.exec(content);
-  const viewed = viewedMatch?.[VIEWED_HEX_POS]?.trim();
-  const bitmap = viewed ? parseHexBitmap(viewed) : [];
-  bitmap[update.index] = update.viewed;
-
-  const lineStart = viewedMatch?.[1] ?? '';
-
-  const newViewedLine = `${lineStart}viewed ${bitmapToHex(bitmap)} (hex bitmap)${eol}`;
-
-  if (viewed) {
-    return content.replace(VIEWED_RE, newViewedLine);
-  } else {
-    return newViewedLine + content;
-  }
-}
-
-
