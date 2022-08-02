@@ -28,7 +28,7 @@ import { parseHexBitmap, bitmapToHex } from "./hex-bitmap";
 const VIEWED_RE = /(^|\n)viewed\s+([0-9a-f]+)(\s.*)\s*($|\n)/i;
 const VIEWED_HEX_POS = 2; // capturing group index
 
-export function  getViewedFiles(diffContent: string): boolean[] {
+export function getViewedFiles(diffContent: string): boolean[] {
   const viewedMatch = VIEWED_RE.exec(diffContent);
   const viewed = viewedMatch?.[VIEWED_HEX_POS]?.trim();
   if (viewed) {
@@ -37,13 +37,13 @@ export function  getViewedFiles(diffContent: string): boolean[] {
   return [];
 }
 
-export function updateViewedFiles(diffContent: string, index: number, viewed: boolean, eol = '\n'): string {
+export function updateViewedFiles(diffContent: string, index: number, viewed: boolean, eol = "\n"): string {
   const viewedMatch = VIEWED_RE.exec(diffContent);
   const origViewedFiles = viewedMatch?.[VIEWED_HEX_POS]?.trim();
   const bitmap = origViewedFiles ? parseHexBitmap(origViewedFiles) : [];
   bitmap[index] = viewed;
 
-  const lineStart = viewedMatch?.[1] ?? '';
+  const lineStart = viewedMatch?.[1] ?? "";
 
   const newViewedLine = `${lineStart}viewed ${bitmapToHex(bitmap)} (hex bitmap)${eol}`;
 
@@ -53,4 +53,3 @@ export function updateViewedFiles(diffContent: string, index: number, viewed: bo
     return newViewedLine + diffContent;
   }
 }
-

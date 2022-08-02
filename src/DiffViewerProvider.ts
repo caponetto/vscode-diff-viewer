@@ -58,41 +58,38 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
         viewedFiles: viewedFiles,
         destination: "app",
       });
-    }
+    };
 
     interface FileViewedMessage {
-      command: 'reportFileViewed',
-      index: number,
-      viewed: boolean,
+      command: "reportFileViewed";
+      index: number;
+      viewed: boolean;
     }
 
     const messageReceiverSubscription = webviewPanel.webview.onDidReceiveMessage((message: FileViewedMessage) => {
-      const eol = diffDocument.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      const eol = diffDocument.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
       const edited = updateViewedFiles(diffDocument.getText(), message.index, message.viewed, eol);
 
       oldContent = edited;
 
       // just replace the entire document every time; a more complete extension should compute minimal edits instead.
-   		const edit = new vscode.WorkspaceEdit();
-      edit.replace(
-        diffDocument.uri,
-        new vscode.Range(0, 0, diffDocument.lineCount, 0),
-        edited);
+      const edit = new vscode.WorkspaceEdit();
+      edit.replace(diffDocument.uri, new vscode.Range(0, 0, diffDocument.lineCount, 0), edited);
 
       return vscode.workspace.applyEdit(edit);
-    })
+    });
 
-		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
-			if (e.document.uri.toString() === diffDocument.uri.toString()) {
-				updateWebview();
-			}
-		});
+    const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
+      if (e.document.uri.toString() === diffDocument.uri.toString()) {
+        updateWebview();
+      }
+    });
 
-		// Make sure we get rid of the listener when our editor is closed.
-		webviewPanel.onDidDispose(() => {
-			changeDocumentSubscription.dispose();
+    // Make sure we get rid of the listener when our editor is closed.
+    webviewPanel.onDidDispose(() => {
+      changeDocumentSubscription.dispose();
       messageReceiverSubscription.dispose();
-		});
+    });
 
     updateWebview();
   }
