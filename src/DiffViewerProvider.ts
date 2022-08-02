@@ -1,9 +1,8 @@
 import { Diff2HtmlConfig, parse } from "diff2html";
 import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
 import * as vscode from "vscode";
-import { DiffDocument } from "./DiffDocument";
 
-export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<DiffDocument> {
+export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   private static readonly VIEW_TYPE = "diffViewer";
   public constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -16,16 +15,8 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
     });
   }
 
-  public async openCustomDocument(
-    uri: vscode.Uri,
-    _openContext: vscode.CustomDocumentOpenContext,
-    _token: vscode.CancellationToken
-  ): Promise<DiffDocument> {
-    return DiffDocument.create(uri);
-  }
-
-  public async resolveCustomEditor(
-    diffDocument: DiffDocument,
+  public async resolveCustomTextEditor(
+    diffDocument: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
     token: vscode.CancellationToken
   ): Promise<void> {
@@ -38,29 +29,52 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
     };
 
     const config = this.extractConfig();
-    const diffFiles = parse(diffDocument.content, config);
-    const viewedFiles = diffDocument.getViewedFiles();
 
-    if (diffFiles.length === 0) {
-      webviewPanel.dispose();
-      vscode.window.showInformationMessage(`No diff structure found in ${diffDocument.filename}.`);
-      vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
-      return;
+    let oldContent: string;
+
+    const updateWebview = () => {
+      const content = diffDocument.getText();
+
+      if (content === oldContent) return;
+      oldContent = content;
+
+      const diffFiles = parse(content, config);
+      const viewedFiles = getViewedFiles(content);
+
+      if (diffFiles.length === 0) {
+        webviewPanel.dispose();
+        vscode.window.showInformationMessage(`No diff structure found in ${diffDocument.fileName}.`);
+        vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
+        return;
+      }
+
+      webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+
+      webviewPanel.webview.postMessage({
+        config: config,
+        diffFiles: diffFiles,
+        viewedFiles: viewedFiles,
+        destination: "app",
+      });
     }
 
-    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
-
-    webviewPanel.webview.postMessage({
-      type: "init",
-      config: config,
-      diffFiles: diffFiles,
-      viewedFiles: viewedFiles,
-      destination: "app",
-    });
-
-    webviewPanel.webview.onDidReceiveMessage((message: FileViewedMessage) => {
+    const messageReceiverSubscription = webviewPanel.webview.onDidReceiveMessage((message: FileViewedMessage) => {
       console.log('file viewed', message.index, message.viewed);
     })
+
+		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
+			if (e.document.uri.toString() === diffDocument.uri.toString()) {
+				updateWebview();
+			}
+		});
+
+		// Make sure we get rid of the listener when our editor is closed.
+		webviewPanel.onDidDispose(() => {
+			changeDocumentSubscription.dispose();
+      messageReceiverSubscription.dispose();
+		});
+
+    updateWebview();
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
@@ -121,4 +135,42 @@ interface FileViewedMessage {
   command: 'reportFileViewed',
   index: number,
   viewed: boolean,
+}
+
+const VIEWED_RE = /(?:^|\n)viewed\s+([0-9a-f]+)(?:\s.*)\s*(?:$|\n)/i;
+
+function  getViewedFiles(content: string): boolean[] {
+  const viewedMatch = VIEWED_RE.exec(content);
+  const viewed = viewedMatch?.[1]?.trim();
+  if (viewed) {
+    return parseHexBitmap(viewed);
+  }
+  return [];
+}
+
+const HEX: {[s: string]: [boolean, boolean, boolean, boolean]} = {
+  '0': [false, false, false, false],
+  '1': [false, false, false, true],
+  '2': [false, false, true, false],
+  '3': [false, false, true, true],
+  '4': [false, true, false, false],
+  '5': [false, true, false, true],
+  '6': [false, true, true, false],
+  '7': [false, true, true, true],
+  '8': [true, false, false, false],
+  '9': [true, false, false, true],
+  'a': [true, false, true, false],
+  'b': [true, false, true, true],
+  'c': [true, true, false, false],
+  'd': [true, true, false, true],
+  'e': [true, true, true, false],
+  'f': [true, true, true, true],
+}
+
+function parseHexBitmap(s: string): boolean[] {
+  const retval = [];
+  for (const char of s) {
+    retval.push(...HEX[char]);
+  }
+  return retval;
 }

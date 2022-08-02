@@ -1,12 +1,16 @@
 (function () {
   const vscode = acquireVsCodeApi();
 
+  // only expecting an update message
   window.addEventListener("message", async (e) => {
     const { config, diffFiles, destination, viewedFiles } = e.data;
+
     const targetElement = document.getElementById(destination);
-    // @ts-ignore
+    targetElement.textContent = '';
+
     const diff2htmlUi = new Diff2HtmlUI(targetElement, diffFiles, config);
     diff2htmlUi.draw();
+
     toggleViewedFiles(targetElement, viewedFiles);
     registerViewToggleHandlers(targetElement);
   });
