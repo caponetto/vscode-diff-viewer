@@ -30,12 +30,13 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
     const config = this.extractConfig();
 
+    // we want to be able to ignore the update that VSCode sends us after we've edited the "viewed" line
     let oldContent: string;
 
     const updateWebview = () => {
       const content = diffDocument.getText();
-
       if (content === oldContent) return;
+
       oldContent = content;
 
       const diffFiles = parse(content, config);
@@ -59,7 +60,19 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     }
 
     const messageReceiverSubscription = webviewPanel.webview.onDidReceiveMessage((message: FileViewedMessage) => {
-      console.log('file viewed', message.index, message.viewed);
+      const eol = diffDocument.eol === vscode.EndOfLine.CRLF ? '\r\n' : '\n';
+      const edited = updateViewedFiles(diffDocument.getText(), message, eol);
+
+      oldContent = edited;
+
+      // just replace the entire document every time; a more complete extension should compute minimal edits instead.
+   		const edit = new vscode.WorkspaceEdit();
+      edit.replace(
+        diffDocument.uri,
+        new vscode.Range(0, 0, diffDocument.lineCount, 0),
+        edited);
+
+      return vscode.workspace.applyEdit(edit);
     })
 
 		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
@@ -137,16 +150,35 @@ interface FileViewedMessage {
   viewed: boolean,
 }
 
-const VIEWED_RE = /(?:^|\n)viewed\s+([0-9a-f]+)(?:\s.*)\s*(?:$|\n)/i;
+const VIEWED_RE = /(^|\n)viewed\s+([0-9a-f]+)(\s.*)\s*($|\n)/i;
+const VIEWED_HEX_POS = 2; // capturing group index
 
 function  getViewedFiles(content: string): boolean[] {
   const viewedMatch = VIEWED_RE.exec(content);
-  const viewed = viewedMatch?.[1]?.trim();
+  const viewed = viewedMatch?.[VIEWED_HEX_POS]?.trim();
   if (viewed) {
     return parseHexBitmap(viewed);
   }
   return [];
 }
+
+function updateViewedFiles(content: string, update: FileViewedMessage, eol: string): string {
+  const viewedMatch = VIEWED_RE.exec(content);
+  const viewed = viewedMatch?.[VIEWED_HEX_POS]?.trim();
+  const bitmap = viewed ? parseHexBitmap(viewed) : [];
+  bitmap[update.index] = update.viewed;
+
+  const lineStart = viewedMatch?.[1] ?? '';
+
+  const newViewedLine = `${lineStart}viewed ${bitmapToHex(bitmap)} (hex bitmap)${eol}`;
+
+  if (viewed) {
+    return content.replace(VIEWED_RE, newViewedLine);
+  } else {
+    return newViewedLine + content;
+  }
+}
+
 
 const HEX: {[s: string]: [boolean, boolean, boolean, boolean]} = {
   '0': [false, false, false, false],
@@ -167,10 +199,27 @@ const HEX: {[s: string]: [boolean, boolean, boolean, boolean]} = {
   'f': [true, true, true, true],
 }
 
+const TO_HEX = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'];
+
 function parseHexBitmap(s: string): boolean[] {
   const retval = [];
   for (const char of s) {
     retval.push(...HEX[char]);
   }
   return retval;
+}
+
+function bitmapToHex(bitmap: boolean[]): string {
+  const retval = [];
+
+  // go 4 bits (a nibble) at a time
+  for (let i = 0; i < bitmap.length; i += 4) {
+    const number = (bitmap[i] ? 8 : 0) +
+      (bitmap[i+1] ? 4 : 0) +
+      (bitmap[i+2] ? 2 : 0) +
+      (bitmap[i+3] ? 1 : 0);
+    retval.push(TO_HEX[number]);
+  }
+
+  return retval.join('');
 }
