@@ -39,6 +39,7 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
 
     const config = this.extractConfig();
     const diffFiles = parse(diffDocument.content, config);
+    const viewedFiles = diffDocument.getViewedFiles();
 
     if (diffFiles.length === 0) {
       webviewPanel.dispose();
@@ -53,8 +54,13 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
       type: "init",
       config: config,
       diffFiles: diffFiles,
+      viewedFiles: viewedFiles,
       destination: "app",
     });
+
+    webviewPanel.webview.onDidReceiveMessage((message: FileViewedMessage) => {
+      console.log('file viewed', message.index, message.viewed);
+    })
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
@@ -109,4 +115,10 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
         .get<boolean>("renderNothingWhenEmpty", false),
     };
   }
+}
+
+interface FileViewedMessage {
+  command: 'reportFileViewed',
+  index: number,
+  viewed: boolean,
 }
