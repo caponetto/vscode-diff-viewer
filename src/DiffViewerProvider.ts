@@ -29,29 +29,11 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       enableScripts: true,
     };
 
-    const updateWebview = () => {
-      const config = this.extractConfig();
-      const diffFiles = parse(diffDocument.getText(), config);
-
-      if (diffFiles.length === 0) {
-        webviewPanel.dispose();
-        vscode.window.showInformationMessage(`No diff structure found in ${path.basename(diffDocument.fileName)}.`);
-        vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
-        return;
-      }
-
-      webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
-
-      webviewPanel.webview.postMessage({
-        config: config,
-        diffFiles: diffFiles,
-        destination: "app",
-      });
-    };
+    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.toString() === diffDocument.uri.toString()) {
-        updateWebview();
+        DiffViewerProvider.updateWebview({ diffDocument, webviewPanel });
       }
     });
 
@@ -59,7 +41,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       changeDocumentSubscription.dispose();
     });
 
-    updateWebview();
+    DiffViewerProvider.updateWebview({ diffDocument, webviewPanel });
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
@@ -92,7 +74,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     return vscode.Uri.joinPath(this.context.extensionUri, "static", filename);
   }
 
-  private extractConfig(): Diff2HtmlConfig {
+  private static extractConfig(): Diff2HtmlConfig {
     return {
       outputFormat: vscode.workspace
         .getConfiguration("diffviewer")
@@ -113,5 +95,24 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
         .getConfiguration("diffviewer")
         .get<boolean>("renderNothingWhenEmpty", false),
     };
+  }
+
+  private static updateWebview(args: { diffDocument: vscode.TextDocument; webviewPanel: vscode.WebviewPanel }) {
+    const { diffDocument, webviewPanel } = args;
+    const config = DiffViewerProvider.extractConfig();
+    const diffFiles = parse(diffDocument.getText(), config);
+
+    if (diffFiles.length === 0) {
+      webviewPanel.dispose();
+      vscode.window.showInformationMessage(`No diff structure found in ${path.basename(diffDocument.fileName)}.`);
+      vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
+      return;
+    }
+
+    webviewPanel.webview.postMessage({
+      config: config,
+      diffFiles: diffFiles,
+      destination: "app",
+    });
   }
 }
