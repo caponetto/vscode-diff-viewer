@@ -1,9 +1,9 @@
 import { Diff2HtmlConfig, parse } from "diff2html";
 import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
 import * as vscode from "vscode";
-import { DiffDocument } from "./DiffDocument";
+import * as path from "path";
 
-export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<DiffDocument> {
+export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   private static readonly VIEW_TYPE = "diffViewer";
   public constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -16,16 +16,8 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
     });
   }
 
-  public async openCustomDocument(
-    uri: vscode.Uri,
-    _openContext: vscode.CustomDocumentOpenContext,
-    _token: vscode.CancellationToken
-  ): Promise<DiffDocument> {
-    return DiffDocument.create(uri);
-  }
-
-  public async resolveCustomEditor(
-    diffDocument: DiffDocument,
+  public async resolveCustomTextEditor(
+    diffDocument: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
     token: vscode.CancellationToken
   ): Promise<void> {
@@ -37,24 +29,39 @@ export class DiffViewerProvider implements vscode.CustomReadonlyEditorProvider<D
       enableScripts: true,
     };
 
-    const config = this.extractConfig();
-    const diffFiles = parse(diffDocument.content, config);
+    const updateWebview = () => {
+      const config = this.extractConfig();
+      const diffFiles = parse(diffDocument.getText(), config);
 
-    if (diffFiles.length === 0) {
-      webviewPanel.dispose();
-      vscode.window.showInformationMessage(`No diff structure found in ${diffDocument.filename}.`);
-      vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
-      return;
-    }
+      if (diffFiles.length === 0) {
+        webviewPanel.dispose();
+        vscode.window.showInformationMessage(`No diff structure found in ${path.basename(diffDocument.fileName)}.`);
+        vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
+        return;
+      }
 
-    webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+      webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
-    webviewPanel.webview.postMessage({
+      webviewPanel.webview.postMessage({
       type: "init",
-      config: config,
-      diffFiles: diffFiles,
-      destination: "app",
+        config: config,
+        diffFiles: diffFiles,
+        destination: "app",
+      });
+    };
+
+    const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
+      if (e.document.uri.toString() === diffDocument.uri.toString()) {
+        updateWebview();
+      }
     });
+
+    // Make sure we get rid of the listener when our editor is closed.
+    webviewPanel.onDidDispose(() => {
+      changeDocumentSubscription.dispose();
+    });
+
+    updateWebview();
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
