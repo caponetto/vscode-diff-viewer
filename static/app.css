@@ -10,10 +10,17 @@ ins {
   vertical-align: baseline !important;
 }
 
+/* tweaks of diff2html CSS */
+
 .d2h-code-line-ctn {
   vertical-align: baseline !important;
 }
 
 .d2h-code-line-prefix {
   vertical-align: top;
+}
+
+/* workaround until https://github.com/rtfpessoa/diff2html/pull/445 is merged */
+.d2h-d-none {
+  display: none !important;
 }
