@@ -33,7 +33,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
     const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
       if (e.document.uri.toString() === diffDocument.uri.toString()) {
-        DiffViewerProvider.updateWebview({ diffDocument, webviewPanel });
+        this.updateWebview({ diffDocument, webviewPanel });
       }
     });
 
@@ -41,7 +41,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       changeDocumentSubscription.dispose();
     });
 
-    DiffViewerProvider.updateWebview({ diffDocument, webviewPanel });
+    this.updateWebview({ diffDocument, webviewPanel });
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
@@ -74,7 +74,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     return vscode.Uri.joinPath(this.context.extensionUri, "static", filename);
   }
 
-  private static extractConfig(): Diff2HtmlConfig {
+  private extractConfig(): Diff2HtmlConfig {
     return {
       outputFormat: vscode.workspace
         .getConfiguration("diffviewer")
@@ -97,9 +97,9 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     };
   }
 
-  private static updateWebview(args: { diffDocument: vscode.TextDocument; webviewPanel: vscode.WebviewPanel }) {
+  private updateWebview(args: { diffDocument: vscode.TextDocument; webviewPanel: vscode.WebviewPanel }) {
     const { diffDocument, webviewPanel } = args;
-    const config = DiffViewerProvider.extractConfig();
+    const config = this.extractConfig();
     const diffFiles = parse(diffDocument.getText(), config);
 
     if (diffFiles.length === 0) {
