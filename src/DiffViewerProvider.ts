@@ -55,7 +55,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       }
     });
 
-    // Make sure we get rid of the listener when our editor is closed.
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
     });
