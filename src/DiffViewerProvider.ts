@@ -43,7 +43,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
 
       webviewPanel.webview.postMessage({
-      type: "init",
         config: config,
         diffFiles: diffFiles,
         destination: "app",
