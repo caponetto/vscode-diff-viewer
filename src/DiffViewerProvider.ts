@@ -59,11 +59,11 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link href="${resetCssUri}" rel="stylesheet" />
-				<link href="${appCssUri}" rel="stylesheet" />
+        <link href="${appCssUri}" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/github.min.css" />
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css" />
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
-				<link href="${tweaksCssUri}" rel="stylesheet" />
+        <link href="${tweaksCssUri}" rel="stylesheet" />
       </head>
       <body>
         <div id="app"></div>
