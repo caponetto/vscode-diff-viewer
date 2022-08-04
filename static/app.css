@@ -20,6 +20,12 @@ ins {
   vertical-align: top;
 }
 
+.d2h-file-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 /* workaround until https://github.com/rtfpessoa/diff2html/pull/445 is merged */
 .d2h-d-none {
   display: none !important;
