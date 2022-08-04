@@ -35,6 +35,9 @@ jobs:
       - name: "Build and Pack"
         run: yarn build:prod && yarn pack:extension
 
+      - name: "Test"
+        run: yarn test
+
       - name: "Upload vsix"
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v2
