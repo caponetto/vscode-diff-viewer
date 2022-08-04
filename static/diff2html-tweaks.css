@@ -21,3 +21,21 @@ ins {
 .d2h-d-none {
   display: none !important;
 }
+
+/* only show line numbers as clickable when they apply to the newer file */
+.d2h-code-linenumber.d2h-del,
+.d2h-code-linenumber.d2h-info,
+.d2h-code-linenumber.d2h-code-side-emptyplaceholder,
+.d2h-code-linenumber.d2h-emptyplaceholder,
+.d2h-code-side-linenumber.d2h-del,
+.d2h-code-side-linenumber.d2h-info,
+.d2h-code-side-linenumber.d2h-code-side-emptyplaceholder,
+.d2h-code-side-linenumber.d2h-emptyplaceholder,
+.d2h-file-side-diff:first-child .d2h-code-side-linenumber {
+  cursor: default;
+}
+
+/* show file names as clickable */
+.d2h-file-name {
+  cursor: pointer;
+}

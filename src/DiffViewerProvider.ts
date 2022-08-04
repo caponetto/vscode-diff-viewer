@@ -3,6 +3,12 @@ import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
 import * as vscode from "vscode";
 import * as path from "path";
 
+interface OpenFileMessage {
+  command: "openFile";
+  path: string;
+  line?: number;
+}
+
 export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   private static readonly VIEW_TYPE = "diffViewer";
   public constructor(private readonly context: vscode.ExtensionContext) {}
@@ -37,8 +43,18 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       }
     });
 
+    const messageReceiverSubscription = webviewPanel.webview.onDidReceiveMessage((message: OpenFileMessage) => {
+      switch (message.command) {
+        case "openFile":
+          return this.handleOpenFileMessage(message, diffDocument);
+        default:
+          console.warn(`Received unknown message command "${message.command}"`);
+      }
+    });
+
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
+      messageReceiverSubscription.dispose();
     });
 
     this.updateWebview({ diffDocument, webviewPanel });
@@ -117,5 +133,17 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       diffFiles: diffFiles,
       destination: "app",
     });
+  }
+
+  private handleOpenFileMessage(message: OpenFileMessage, diffDocument: vscode.TextDocument) {
+    const filePath = path.join(path.dirname(diffDocument.uri.fsPath), message.path);
+    const uri = vscode.Uri.file(filePath);
+
+    const options: vscode.TextDocumentShowOptions = {};
+    if (message.line != null) {
+      options.selection = new vscode.Range(message.line - 1, 0, message.line - 1, 0);
+    }
+
+    vscode.commands.executeCommand("vscode.open", uri, options);
   }
 }
