@@ -4,4 +4,17 @@ body {
   background-color: white !important;
   color: black !important;
   padding: 1px;
+  display: flex;
+  flex-direction: column;
+}
+
+footer {
+  position: sticky;
+  bottom: 0;
+  text-align: right;
+  font-size: smaller;
+  padding: 0.3em;
+  background-color: white !important;
+  margin-top: auto;
+  z-index: 1;
 }
