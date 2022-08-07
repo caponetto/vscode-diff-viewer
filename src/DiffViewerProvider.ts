@@ -9,6 +9,8 @@ interface OpenFileMessage {
   line?: number;
 }
 
+type Message = OpenFileMessage; // there will be more in future
+
 export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   private static readonly VIEW_TYPE = "diffViewer";
   public constructor(private readonly context: vscode.ExtensionContext) {}
@@ -43,7 +45,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       }
     });
 
-    const messageReceiverSubscription = webviewPanel.webview.onDidReceiveMessage((message: OpenFileMessage) => {
+    const messageReceiverSubscription = webviewPanel.webview.onDidReceiveMessage((message: Message) => {
       switch (message.command) {
         case "openFile":
           return this.handleOpenFileMessage(message, diffDocument);
