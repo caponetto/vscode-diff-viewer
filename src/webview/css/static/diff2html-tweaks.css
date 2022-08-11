@@ -1,0 +1,41 @@
+del,
+ins {
+  vertical-align: baseline !important;
+}
+
+.d2h-code-line-ctn {
+  vertical-align: baseline !important;
+}
+
+.d2h-code-line-prefix {
+  vertical-align: top;
+}
+
+.d2h-file-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* workaround until https://github.com/rtfpessoa/diff2html/pull/445 is merged */
+.d2h-d-none {
+  display: none !important;
+}
+
+/* only show line numbers as clickable when they apply to the newer file */
+.d2h-code-linenumber.d2h-del,
+.d2h-code-linenumber.d2h-info,
+.d2h-code-linenumber.d2h-code-side-emptyplaceholder,
+.d2h-code-linenumber.d2h-emptyplaceholder,
+.d2h-code-side-linenumber.d2h-del,
+.d2h-code-side-linenumber.d2h-info,
+.d2h-code-side-linenumber.d2h-code-side-emptyplaceholder,
+.d2h-code-side-linenumber.d2h-emptyplaceholder,
+.d2h-file-side-diff:first-child .d2h-code-side-linenumber {
+  cursor: default;
+}
+
+/* show file names as clickable */
+.d2h-file-name {
+  cursor: pointer;
+}

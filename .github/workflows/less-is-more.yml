@@ -2,7 +2,7 @@ name: "Less is more"
 
 on:
   pull_request:
-    branches: "**"
+    branches: ["**"]
 
 concurrency:
   group: less-is-more-${{ github.event.pull_request.number }}
