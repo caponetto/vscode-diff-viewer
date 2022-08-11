@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: "**"
+    branches: ["**"]
 
 concurrency:
   group: ${{ github.event.pull_request && format('ci-pr-{0}', github.event.pull_request.number) || 'ci-push-main' }}
@@ -38,7 +38,7 @@ jobs:
       - name: "Test"
         run: yarn test
 
-      - name: "Upload vsix"
+      - name: "Upload vsix (Ubuntu only)"
         if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v2
         with:

@@ -1,8 +1,10 @@
 .github/**
 .vscode/**
+.husky/**
+node_modules/**
+src/**
 **/*.ts
 **/*.map
 .gitignore
-**/tsconfig.json
-*.config.js
-node_modules
+tsconfig.json
+webpack.config.js
