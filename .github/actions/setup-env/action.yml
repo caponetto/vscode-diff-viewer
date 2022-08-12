@@ -5,9 +5,9 @@ runs:
   using: "composite"
   steps:
     - name: "Setup :: Node"
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
-        node-version: 16.13.2
+        node-version: 16
         cache: "yarn"
 
     - name: "Bootstrap"
