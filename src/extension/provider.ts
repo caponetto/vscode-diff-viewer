@@ -18,7 +18,6 @@ interface WebviewContext {
 
 export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   private static readonly VIEW_TYPE = "diffViewer";
-  private messageReceivedHandler: MessageToExtensionHandler | undefined;
 
   public constructor(private readonly args: DiffViewerProviderArgs) {}
 
@@ -50,7 +49,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
     webviewPanel.webview.html = buildSkeleton(webviewUri);
 
-    this.messageReceivedHandler = new MessageToExtensionHandlerImpl({
+    const messageReceivedHandler = new MessageToExtensionHandlerImpl({
       diffDocument,
       postMessageToWebviewFn: (message: MessageToWebview) => {
         this.postMessageToWebviewWrapper({ webview: webviewPanel.webview, message });
@@ -66,32 +65,32 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       },
     });
 
-    this.registerEventHandlers(webviewContext);
+    this.registerEventHandlers({ webviewContext, messageHandler: messageReceivedHandler });
     this.updateWebview(webviewContext);
   }
 
-  private registerEventHandlers(webviewContext: WebviewContext) {
+  private registerEventHandlers(args: { webviewContext: WebviewContext; messageHandler: MessageToExtensionHandler }) {
     const disposables = vscode.Disposable.from(
       vscode.workspace.onDidChangeTextDocument((e) => {
-        if (e.document.uri.fsPath !== webviewContext.document.uri.fsPath) {
+        if (e.document.uri.fsPath !== args.webviewContext.document.uri.fsPath) {
           return;
         }
 
-        this.updateWebview(webviewContext);
+        this.updateWebview(args.webviewContext);
       }),
-      webviewContext.panel.webview.onDidReceiveMessage((m) => {
-        this.messageReceivedHandler?.onMessageReceived(m);
+      args.webviewContext.panel.webview.onDidReceiveMessage((m) => {
+        args.messageHandler.onMessageReceived(m);
       }),
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (!e.affectsConfiguration(APP_CONFIG_SECTION)) {
           return;
         }
 
-        this.updateWebview(webviewContext);
+        this.updateWebview(args.webviewContext);
       })
     );
 
-    webviewContext.panel.onDidDispose(() => disposables.dispose());
+    args.webviewContext.panel.onDidDispose(() => disposables.dispose());
   }
 
   private updateWebview(webviewContext: WebviewContext): void {
