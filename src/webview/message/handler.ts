@@ -1,9 +1,11 @@
 import { DiffFile } from "diff2html/lib/types";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
 import { AppConfig } from "../../extension/configuration";
+import { ViewedState } from "../../extension/viewed-state";
 import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
 import { MessageToExtension, MessageToWebview, MessageToWebviewHandler } from "../../shared/message";
 import { Diff2HtmlCssClassElements } from "../css/elements";
+import { UpdateWebviewPayload } from "./api";
 
 export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   private currentConfig: AppConfig | undefined = undefined;
@@ -23,11 +25,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     this.postMessageToExtensionFn({ kind: "pong" });
   }
 
-  public async updateWebview(payload: {
-    config: AppConfig;
-    diffFiles: DiffFile[];
-    diffContainer: string;
-  }): Promise<void> {
+  public async updateWebview(payload: UpdateWebviewPayload): Promise<void> {
     const diffContainer = document.getElementById(payload.diffContainer);
     if (!diffContainer) {
       return;
@@ -39,6 +37,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
     this.registerViewedToggleHandlers(diffContainer);
     this.registerDiffContainerHandlers(diffContainer);
+    this.toggleViewedFiles(diffContainer, payload.viewedState);
     this.updateFooter();
   }
 
@@ -60,6 +59,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
     this.scrollDiffFileHeaderIntoView(viewedToggle);
     this.updateFooter();
+    this.sendFileViewedMessage(viewedToggle);
   }
 
   private scrollDiffFileHeaderIntoView(viewedToggle: HTMLInputElement): void {
@@ -172,5 +172,30 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     }
 
     return extractNumberFromString(lineNumberElement.textContent);
+  }
+
+  private toggleViewedFiles(diffContainer: HTMLElement, viewedState: ViewedState) {
+    const viewedToggles = diffContainer.querySelectorAll<HTMLInputElement>(
+      Diff2HtmlCssClassElements.Input__ViewedToggle
+    );
+    for (const toggle of Array.from(viewedToggles)) {
+      const fileName = this.getDiffElementFileName(toggle);
+      if (fileName && viewedState[fileName]) toggle.click();
+    }
+  }
+
+  private sendFileViewedMessage(toggleElement: HTMLInputElement): void {
+    const fileName = this.getDiffElementFileName(toggleElement);
+    if (!fileName) {
+      return;
+    }
+
+    this.postMessageToExtensionFn({
+      kind: "toggleFileViewed",
+      payload: {
+        path: fileName,
+        value: toggleElement.checked,
+      },
+    });
   }
 }
