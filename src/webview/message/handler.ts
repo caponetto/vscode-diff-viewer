@@ -87,26 +87,26 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   }
 
   private registerDiffContainerHandlers(diffContainer: HTMLElement): void {
-    diffContainer.addEventListener("click", this.onDiffContainerClickedHandler.bind(this));
+    diffContainer.addEventListener("click", this.onDiffClickedHandler.bind(this));
   }
 
-  private onDiffContainerClickedHandler(event: Event): void {
-    const diffContainer = event.target as HTMLElement;
-    if (!diffContainer) {
+  private onDiffClickedHandler(event: Event): void {
+    const diffElement = event.target as HTMLElement;
+    if (!diffElement) {
       return;
     }
 
-    this.maybeOpenFile(diffContainer);
+    this.maybeOpenFile(diffElement);
   }
 
-  private maybeOpenFile(diffContainer: HTMLElement): void {
-    const fileName = this.getClickedFileName(diffContainer);
+  private maybeOpenFile(diffElement: HTMLElement): void {
+    const fileName = this.getDiffElementFileName(diffElement);
     if (!fileName) {
       return;
     }
 
-    const lineNumber = this.getClickedLineNumber(diffContainer);
-    const ignoreOtherClicks = !lineNumber && !diffContainer.closest(Diff2HtmlCssClassElements.A__FileName);
+    const lineNumber = this.getClickedLineNumber(diffElement);
+    const ignoreOtherClicks = !lineNumber && !diffElement.closest(Diff2HtmlCssClassElements.A__FileName);
     if (ignoreOtherClicks) {
       return;
     }
@@ -120,8 +120,8 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     });
   }
 
-  private getClickedFileName(diffContainer: HTMLElement): string | undefined {
-    const fileContainer = diffContainer.closest(Diff2HtmlCssClassElements.Div__File);
+  private getDiffElementFileName(diffElement: HTMLElement): string | undefined {
+    const fileContainer = diffElement.closest(Diff2HtmlCssClassElements.Div__File);
     const fileNameValue = fileContainer?.querySelector(Diff2HtmlCssClassElements.A__FileName)?.textContent;
     if (!fileNameValue) {
       return;
@@ -130,18 +130,18 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     return extractNewFileNameFromDiffName(fileNameValue);
   }
 
-  private getClickedLineNumber(diffContainer: HTMLElement): number | undefined {
+  private getClickedLineNumber(diffElement: HTMLElement): number | undefined {
     if (!this.currentConfig) {
       return;
     }
 
     return this.currentConfig.diff2html.outputFormat === "line-by-line"
-      ? this.getClickedLineNumberOnLineByLine(diffContainer)
-      : this.getClickedLineNumberOnSideBySide(diffContainer);
+      ? this.getClickedLineNumberOnLineByLine(diffElement)
+      : this.getClickedLineNumberOnSideBySide(diffElement);
   }
 
-  private getClickedLineNumberOnLineByLine(diffContainer: HTMLElement): number | undefined {
-    const lineNumberElement = diffContainer.closest(Diff2HtmlCssClassElements.Td__LineNumberOnLineByLine);
+  private getClickedLineNumberOnLineByLine(diffElement: HTMLElement): number | undefined {
+    const lineNumberElement = diffElement.closest(Diff2HtmlCssClassElements.Td__LineNumberOnLineByLine);
     if (!lineNumberElement) {
       return;
     }
@@ -161,8 +161,8 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     return extractNumberFromString(lineNumberValue);
   }
 
-  private getClickedLineNumberOnSideBySide(diffContainer: HTMLElement): number | undefined {
-    const lineNumberElement = diffContainer.closest(Diff2HtmlCssClassElements.Td__LineNumberOnSideBySide);
+  private getClickedLineNumberOnSideBySide(diffElement: HTMLElement): number | undefined {
+    const lineNumberElement = diffElement.closest(Diff2HtmlCssClassElements.Td__LineNumberOnSideBySide);
     if (!lineNumberElement?.textContent) {
       return;
     }
