@@ -2,15 +2,13 @@ import * as vscode from "vscode";
 
 export type ViewedValue = boolean;
 
-export interface ViewedState {
-  [path: string]: ViewedValue;
-}
+export type ViewedState = Record<string, boolean>;
 
 export class ViewedStateStore {
   // transient state is used if args.docId is empty
   private transientViewedState: ViewedState = {};
 
-  public constructor(public args: { docId?: string; context: vscode.ExtensionContext }) {}
+  public constructor(private args: { docId?: string; context: vscode.ExtensionContext }) {}
 
   public getViewedState(): ViewedState {
     if (!this.args.docId) {
@@ -38,7 +36,7 @@ export class ViewedStateStore {
     if (!this.args.docId) {
       this.transientViewedState = viewedState;
     } else {
-      const savedState = this.args.context.workspaceState.update(this.args.docId, viewedState);
+      this.args.context.workspaceState.update(this.args.docId, viewedState);
     }
   }
 }

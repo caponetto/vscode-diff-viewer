@@ -13,15 +13,10 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
   ) {}
 
   public onMessageReceived(message: MessageToExtension): void {
-    switch (message.kind) {
-      case "openFile":
-        this.openFile(message.payload);
-        break;
-      case "toggleFileViewed":
-        this.toggleFileViewed(message.payload);
-        break;
-      default:
-        this[message.kind]();
+    if ("payload" in message) {
+      this[message.kind](message.payload as any);
+    } else {
+      this[message.kind]();
     }
   }
 
