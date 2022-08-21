@@ -1,4 +1,3 @@
-import { DiffFile } from "diff2html/lib/types";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
 import { AppConfig } from "../../extension/configuration";
 import { ViewedState } from "../../extension/viewed-state";
