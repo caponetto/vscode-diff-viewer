@@ -1,18 +1,20 @@
 import { basename, join } from "path";
 import * as vscode from "vscode";
 import { MessageToExtension, MessageToExtensionHandler, MessageToWebview } from "../../shared/message";
+import { ViewedStateStore } from "../viewed-state";
 
 export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler {
   constructor(
     private readonly args: {
       diffDocument: vscode.TextDocument;
+      viewedStateStore: ViewedStateStore;
       postMessageToWebviewFn: (message: MessageToWebview) => void;
     }
   ) {}
 
   public onMessageReceived(message: MessageToExtension): void {
     if ("payload" in message) {
-      this[message.kind](message.payload);
+      this[message.kind](message.payload as any);
     } else {
       this[message.kind]();
     }
@@ -39,6 +41,10 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
     }
 
     vscode.commands.executeCommand("vscode.open", uri, showOptions);
+  }
+
+  public toggleFileViewed(payload: { path: string; isViewed: boolean }): void {
+    this.args.viewedStateStore.toggleViewedState(payload);
   }
 
   private async getUriFromPathInWorkspaceIfExists(path: string): Promise<vscode.Uri | undefined> {

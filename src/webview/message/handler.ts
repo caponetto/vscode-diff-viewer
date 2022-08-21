@@ -1,9 +1,10 @@
-import { DiffFile } from "diff2html/lib/types";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
 import { AppConfig } from "../../extension/configuration";
+import { ViewedState } from "../../extension/viewed-state";
 import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
 import { MessageToExtension, MessageToWebview, MessageToWebviewHandler } from "../../shared/message";
 import { Diff2HtmlCssClassElements } from "../css/elements";
+import { UpdateWebviewPayload } from "./api";
 
 export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   private currentConfig: AppConfig | undefined = undefined;
@@ -23,11 +24,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     this.postMessageToExtensionFn({ kind: "pong" });
   }
 
-  public async updateWebview(payload: {
-    config: AppConfig;
-    diffFiles: DiffFile[];
-    diffContainer: string;
-  }): Promise<void> {
+  public async updateWebview(payload: UpdateWebviewPayload): Promise<void> {
     const diffContainer = document.getElementById(payload.diffContainer);
     if (!diffContainer) {
       return;
@@ -39,6 +36,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
     this.registerViewedToggleHandlers(diffContainer);
     this.registerDiffContainerHandlers(diffContainer);
+    this.hideViewedFiles(diffContainer, payload.viewedState);
     this.updateFooter();
   }
 
@@ -60,6 +58,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
     this.scrollDiffFileHeaderIntoView(viewedToggle);
     this.updateFooter();
+    this.sendFileViewedMessage(viewedToggle);
   }
 
   private scrollDiffFileHeaderIntoView(viewedToggle: HTMLInputElement): void {
@@ -87,26 +86,26 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   }
 
   private registerDiffContainerHandlers(diffContainer: HTMLElement): void {
-    diffContainer.addEventListener("click", this.onDiffContainerClickedHandler.bind(this));
+    diffContainer.addEventListener("click", this.onDiffClickedHandler.bind(this));
   }
 
-  private onDiffContainerClickedHandler(event: Event): void {
-    const diffContainer = event.target as HTMLElement;
-    if (!diffContainer) {
+  private onDiffClickedHandler(event: Event): void {
+    const diffElement = event.target as HTMLElement;
+    if (!diffElement) {
       return;
     }
 
-    this.maybeOpenFile(diffContainer);
+    this.maybeOpenFile(diffElement);
   }
 
-  private maybeOpenFile(diffContainer: HTMLElement): void {
-    const fileName = this.getClickedFileName(diffContainer);
+  private maybeOpenFile(diffElement: HTMLElement): void {
+    const fileName = this.getDiffElementFileName(diffElement);
     if (!fileName) {
       return;
     }
 
-    const lineNumber = this.getClickedLineNumber(diffContainer);
-    const ignoreOtherClicks = !lineNumber && !diffContainer.closest(Diff2HtmlCssClassElements.A__FileName);
+    const lineNumber = this.getClickedLineNumber(diffElement);
+    const ignoreOtherClicks = !lineNumber && !diffElement.closest(Diff2HtmlCssClassElements.A__FileName);
     if (ignoreOtherClicks) {
       return;
     }
@@ -120,8 +119,8 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     });
   }
 
-  private getClickedFileName(diffContainer: HTMLElement): string | undefined {
-    const fileContainer = diffContainer.closest(Diff2HtmlCssClassElements.Div__File);
+  private getDiffElementFileName(diffElement: HTMLElement): string | undefined {
+    const fileContainer = diffElement.closest(Diff2HtmlCssClassElements.Div__File);
     const fileNameValue = fileContainer?.querySelector(Diff2HtmlCssClassElements.A__FileName)?.textContent;
     if (!fileNameValue) {
       return;
@@ -130,18 +129,18 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     return extractNewFileNameFromDiffName(fileNameValue);
   }
 
-  private getClickedLineNumber(diffContainer: HTMLElement): number | undefined {
+  private getClickedLineNumber(diffElement: HTMLElement): number | undefined {
     if (!this.currentConfig) {
       return;
     }
 
     return this.currentConfig.diff2html.outputFormat === "line-by-line"
-      ? this.getClickedLineNumberOnLineByLine(diffContainer)
-      : this.getClickedLineNumberOnSideBySide(diffContainer);
+      ? this.getClickedLineNumberOnLineByLine(diffElement)
+      : this.getClickedLineNumberOnSideBySide(diffElement);
   }
 
-  private getClickedLineNumberOnLineByLine(diffContainer: HTMLElement): number | undefined {
-    const lineNumberElement = diffContainer.closest(Diff2HtmlCssClassElements.Td__LineNumberOnLineByLine);
+  private getClickedLineNumberOnLineByLine(diffElement: HTMLElement): number | undefined {
+    const lineNumberElement = diffElement.closest(Diff2HtmlCssClassElements.Td__LineNumberOnLineByLine);
     if (!lineNumberElement) {
       return;
     }
@@ -161,8 +160,8 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     return extractNumberFromString(lineNumberValue);
   }
 
-  private getClickedLineNumberOnSideBySide(diffContainer: HTMLElement): number | undefined {
-    const lineNumberElement = diffContainer.closest(Diff2HtmlCssClassElements.Td__LineNumberOnSideBySide);
+  private getClickedLineNumberOnSideBySide(diffElement: HTMLElement): number | undefined {
+    const lineNumberElement = diffElement.closest(Diff2HtmlCssClassElements.Td__LineNumberOnSideBySide);
     if (!lineNumberElement?.textContent) {
       return;
     }
@@ -172,5 +171,30 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     }
 
     return extractNumberFromString(lineNumberElement.textContent);
+  }
+
+  private hideViewedFiles(diffContainer: HTMLElement, viewedState: ViewedState) {
+    const viewedToggles = diffContainer.querySelectorAll<HTMLInputElement>(
+      Diff2HtmlCssClassElements.Input__ViewedToggle
+    );
+    for (const toggle of Array.from(viewedToggles)) {
+      const fileName = this.getDiffElementFileName(toggle);
+      if (fileName && viewedState[fileName]) toggle.click();
+    }
+  }
+
+  private sendFileViewedMessage(toggleElement: HTMLInputElement): void {
+    const fileName = this.getDiffElementFileName(toggleElement);
+    if (!fileName) {
+      return;
+    }
+
+    this.postMessageToExtensionFn({
+      kind: "toggleFileViewed",
+      payload: {
+        path: fileName,
+        isViewed: toggleElement.checked,
+      },
+    });
   }
 }

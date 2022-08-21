@@ -5,6 +5,7 @@ import { MessageToExtensionHandler, MessageToWebview } from "../shared/message";
 import { APP_CONFIG_SECTION, extractConfig } from "./configuration";
 import { MessageToExtensionHandlerImpl } from "./message/handler";
 import { buildSkeleton, SkeletonElementIds } from "./skeleton";
+import { ViewedStateStore } from "./viewed-state";
 
 interface DiffViewerProviderArgs {
   extensionContext: vscode.ExtensionContext;
@@ -13,6 +14,7 @@ interface DiffViewerProviderArgs {
 
 interface WebviewContext {
   document: vscode.TextDocument;
+  viewedStateStore: ViewedStateStore;
   panel: vscode.WebviewPanel;
 }
 
@@ -49,14 +51,20 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
     webviewPanel.webview.html = buildSkeleton(webviewUri);
 
+    const viewedStateStore = new ViewedStateStore({
+      context: this.args.extensionContext,
+      docId: diffDocument.uri.fsPath,
+    });
+
     const messageReceivedHandler = new MessageToExtensionHandlerImpl({
       diffDocument,
+      viewedStateStore,
       postMessageToWebviewFn: (message: MessageToWebview) => {
         this.postMessageToWebviewWrapper({ webview: webviewPanel.webview, message });
       },
     });
 
-    const webviewContext: WebviewContext = { document: diffDocument, panel: webviewPanel };
+    const webviewContext: WebviewContext = { document: diffDocument, panel: webviewPanel, viewedStateStore };
 
     this.postMessageToWebviewWrapper({
       webview: webviewPanel.webview,
@@ -106,6 +114,8 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       return;
     }
 
+    const viewedState = webviewContext.viewedStateStore.getViewedState();
+
     this.postMessageToWebviewWrapper({
       webview: webviewContext.panel.webview,
       message: {
@@ -113,6 +123,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
         payload: {
           config: config,
           diffFiles: diffFiles,
+          viewedState: viewedState,
           diffContainer: SkeletonElementIds.DiffContainer,
         },
       },
