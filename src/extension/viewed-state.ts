@@ -1,7 +1,5 @@
 import * as vscode from "vscode";
 
-export type ViewedValue = boolean;
-
 export type ViewedState = Record<string, boolean>;
 
 export class ViewedStateStore {
@@ -19,11 +17,11 @@ export class ViewedStateStore {
     return savedState || this.transientViewedState;
   }
 
-  public toggleViewedState(args: { path: string; value: ViewedValue }): void {
+  public toggleViewedState(args: { path: string; isViewed: boolean }): void {
     const viewedState = this.getViewedState();
 
-    if (args.value) {
-      viewedState[args.path] = args.value;
+    if (args.isViewed) {
+      viewedState[args.path] = args.isViewed;
     } else {
       // no need to store false
       delete viewedState[args.path];

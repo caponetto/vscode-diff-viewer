@@ -37,7 +37,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
     this.registerViewedToggleHandlers(diffContainer);
     this.registerDiffContainerHandlers(diffContainer);
-    this.toggleViewedFiles(diffContainer, payload.viewedState);
+    this.hideViewedFiles(diffContainer, payload.viewedState);
     this.updateFooter();
   }
 
@@ -174,7 +174,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     return extractNumberFromString(lineNumberElement.textContent);
   }
 
-  private toggleViewedFiles(diffContainer: HTMLElement, viewedState: ViewedState) {
+  private hideViewedFiles(diffContainer: HTMLElement, viewedState: ViewedState) {
     const viewedToggles = diffContainer.querySelectorAll<HTMLInputElement>(
       Diff2HtmlCssClassElements.Input__ViewedToggle
     );
@@ -194,7 +194,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
       kind: "toggleFileViewed",
       payload: {
         path: fileName,
-        value: toggleElement.checked,
+        isViewed: toggleElement.checked,
       },
     });
   }
