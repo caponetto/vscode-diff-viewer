@@ -1,6 +1,7 @@
 export enum Diff2HtmlCssClassElements {
   A__FileName = ".d2h-file-name",
   Div__DiffFileHeader = ".d2h-file-header",
+  Div__DiffFileContent = ".d2h-file-diff, .d2h-files-diff",
   Div__File = ".d2h-file-wrapper",
   Div__LeftDiffOnSideBySide__FirstChild = ".d2h-file-side-diff:first-child",
   Div__LineNumberRightOnLineByLine = ".line-num2",
