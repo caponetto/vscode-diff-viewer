@@ -201,7 +201,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
   private async getDiffHash(diffElement: HTMLElement) {
     const fileContainer = this.getDiffFileContainer(diffElement);
-    const fileContent = fileContainer?.querySelector(Diff2HtmlCssClassElements.Div__DiffFileContent)?.textContent;
+    const fileContent = fileContainer?.querySelector(Diff2HtmlCssClassElements.Div__DiffFileContent)?.innerHTML;
     if (!fileContent) return null;
 
     const fileContentUtf8 = encoder.encode(fileContent);
