@@ -4,9 +4,8 @@ import { ViewedState } from "../../extension/viewed-state";
 import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
 import { MessageToExtension, MessageToWebview, MessageToWebviewHandler } from "../../shared/message";
 import { Diff2HtmlCssClassElements } from "../css/elements";
+import { getSha1Hash } from "./hash";
 import { UpdateWebviewPayload } from "./api";
-
-const encoder = new TextEncoder();
 
 const CHANGED_SINCE_VIEWED = "changed-since-last-view";
 
@@ -199,18 +198,10 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     }
   }
 
-  private async getDiffHash(diffElement: HTMLElement) {
+  private async getDiffHash(diffElement: HTMLElement): Promise<string | null> {
     const fileContainer = this.getDiffFileContainer(diffElement);
     const fileContent = fileContainer?.querySelector(Diff2HtmlCssClassElements.Div__DiffFileContent)?.innerHTML;
-    if (!fileContent) return null;
-
-    const fileContentUtf8 = encoder.encode(fileContent);
-    const hash = await window.crypto.subtle.digest("SHA-1", fileContentUtf8);
-    const hashHex = Array.from(new Uint8Array(hash))
-      .map((x) => x.toString(16).padStart(2, "0"))
-      .join("");
-
-    return hashHex;
+    return fileContent ? await getSha1Hash(fileContent) : null;
   }
 
   private async sendFileViewedMessage(toggleElement: HTMLInputElement): Promise<void> {
