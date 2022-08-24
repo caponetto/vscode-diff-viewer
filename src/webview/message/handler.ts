@@ -4,7 +4,10 @@ import { ViewedState } from "../../extension/viewed-state";
 import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
 import { MessageToExtension, MessageToWebview, MessageToWebviewHandler } from "../../shared/message";
 import { Diff2HtmlCssClassElements } from "../css/elements";
+import { getSha1Hash } from "./hash";
 import { UpdateWebviewPayload } from "./api";
+
+const CHANGED_SINCE_VIEWED = "changed-since-last-view";
 
 export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   private currentConfig: AppConfig | undefined = undefined;
@@ -36,7 +39,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
     this.registerViewedToggleHandlers(diffContainer);
     this.registerDiffContainerHandlers(diffContainer);
-    this.hideViewedFiles(diffContainer, payload.viewedState);
+    await this.hideViewedFiles(diffContainer, payload.viewedState);
     this.updateFooter();
   }
 
@@ -56,6 +59,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
       return;
     }
 
+    viewedToggle.classList.remove(CHANGED_SINCE_VIEWED);
     this.scrollDiffFileHeaderIntoView(viewedToggle);
     this.updateFooter();
     this.sendFileViewedMessage(viewedToggle);
@@ -119,8 +123,12 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     });
   }
 
+  private getDiffFileContainer(diffElement: HTMLElement): HTMLElement | null {
+    return diffElement.closest(Diff2HtmlCssClassElements.Div__File);
+  }
+
   private getDiffElementFileName(diffElement: HTMLElement): string | undefined {
-    const fileContainer = diffElement.closest(Diff2HtmlCssClassElements.Div__File);
+    const fileContainer = this.getDiffFileContainer(diffElement);
     const fileNameValue = fileContainer?.querySelector(Diff2HtmlCssClassElements.A__FileName)?.textContent;
     if (!fileNameValue) {
       return;
@@ -173,27 +181,42 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     return extractNumberFromString(lineNumberElement.textContent);
   }
 
-  private hideViewedFiles(diffContainer: HTMLElement, viewedState: ViewedState) {
+  private async hideViewedFiles(diffContainer: HTMLElement, viewedState: ViewedState) {
     const viewedToggles = diffContainer.querySelectorAll<HTMLInputElement>(
       Diff2HtmlCssClassElements.Input__ViewedToggle
     );
     for (const toggle of Array.from(viewedToggles)) {
       const fileName = this.getDiffElementFileName(toggle);
-      if (fileName && viewedState[fileName]) toggle.click();
+      if (fileName && viewedState[fileName]) {
+        const diffHash = await this.getDiffHash(toggle);
+        if (diffHash === viewedState[fileName]) {
+          toggle.click();
+        } else {
+          toggle.classList.add(CHANGED_SINCE_VIEWED);
+        }
+      }
     }
   }
 
-  private sendFileViewedMessage(toggleElement: HTMLInputElement): void {
+  private async getDiffHash(diffElement: HTMLElement): Promise<string | null> {
+    const fileContainer = this.getDiffFileContainer(diffElement);
+    const fileContent = fileContainer?.querySelector(Diff2HtmlCssClassElements.Div__DiffFileContent)?.innerHTML;
+    return fileContent ? await getSha1Hash(fileContent) : null;
+  }
+
+  private async sendFileViewedMessage(toggleElement: HTMLInputElement): Promise<void> {
     const fileName = this.getDiffElementFileName(toggleElement);
     if (!fileName) {
       return;
     }
 
+    const viewedSha1 = toggleElement.checked ? await this.getDiffHash(toggleElement) : null;
+
     this.postMessageToExtensionFn({
       kind: "toggleFileViewed",
       payload: {
         path: fileName,
-        isViewed: toggleElement.checked,
+        viewedSha1,
       },
     });
   }

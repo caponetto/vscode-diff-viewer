@@ -43,7 +43,7 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
     vscode.commands.executeCommand("vscode.open", uri, showOptions);
   }
 
-  public toggleFileViewed(payload: { path: string; isViewed: boolean }): void {
+  public toggleFileViewed(payload: { path: string; viewedSha1: string | null }): void {
     this.args.viewedStateStore.toggleViewedState(payload);
   }
 

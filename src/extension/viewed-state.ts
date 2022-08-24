@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-export type ViewedState = Record<string, boolean>;
+export type ViewedState = Record<string, string>;
 
 export class ViewedStateStore {
   // transient state is used if args.docId is empty
@@ -17,11 +17,11 @@ export class ViewedStateStore {
     return savedState || this.transientViewedState;
   }
 
-  public toggleViewedState(args: { path: string; isViewed: boolean }): void {
+  public toggleViewedState(args: { path: string; viewedSha1: string | null }): void {
     const viewedState = this.getViewedState();
 
-    if (args.isViewed) {
-      viewedState[args.path] = args.isViewed;
+    if (args.viewedSha1) {
+      viewedState[args.path] = args.viewedSha1;
     } else {
       // no need to store false
       delete viewedState[args.path];

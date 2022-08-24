@@ -18,3 +18,22 @@ footer {
   margin-top: auto;
   z-index: 1;
 }
+
+/* showing "Changed since last view" message */
+label.d2h-file-collapse {
+  position: relative;
+}
+
+input.changed-since-last-view:before {
+  content: "Changed since last view";
+  white-space: pre;
+  position: absolute;
+  bottom: 100%;
+  right: -0.5em;
+  padding: 0.25em 0.5em;
+  border-radius: 1em;
+  border: solid thin #c60;
+  background: white;
+  color: #930;
+  font-size: 90%;
+}
