@@ -1,8 +1,5 @@
 import * as vscode from "vscode";
-
-export enum SkeletonElementIds {
-  DiffContainer = "diff-container",
-}
+import { SkeletonElementIds } from "../shared/css/elements";
 
 export const buildSkeleton = (webviewUri: vscode.Uri) => `
 <!DOCTYPE html>
@@ -14,6 +11,9 @@ export const buildSkeleton = (webviewUri: vscode.Uri) => `
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head>
 <body>
+  <div id="${SkeletonElementIds.LoadingContainer}">
+    <span>Loading...</span>
+  </div>
   <div id="${SkeletonElementIds.DiffContainer}"></div>
   <footer />
   <script src="${webviewUri}"></script>
