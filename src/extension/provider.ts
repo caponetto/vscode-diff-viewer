@@ -1,10 +1,11 @@
 import { parse } from "diff2html";
 import { basename } from "path";
 import * as vscode from "vscode";
+import { SkeletonElementIds } from "../shared/css/elements";
 import { MessageToExtensionHandler, MessageToWebview } from "../shared/message";
 import { APP_CONFIG_SECTION, extractConfig } from "./configuration";
 import { MessageToExtensionHandlerImpl } from "./message/handler";
-import { buildSkeleton, SkeletonElementIds } from "./skeleton";
+import { buildSkeleton } from "./skeleton";
 import { ViewedStateStore } from "./viewed-state";
 
 interface DiffViewerProviderArgs {

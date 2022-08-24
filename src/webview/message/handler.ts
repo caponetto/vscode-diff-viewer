@@ -1,11 +1,12 @@
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
 import { AppConfig } from "../../extension/configuration";
 import { ViewedState } from "../../extension/viewed-state";
+import { SkeletonElementIds } from "../../shared/css/elements";
 import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
 import { MessageToExtension, MessageToWebview, MessageToWebviewHandler } from "../../shared/message";
 import { Diff2HtmlCssClassElements } from "../css/elements";
-import { getSha1Hash } from "./hash";
 import { UpdateWebviewPayload } from "./api";
+import { getSha1Hash } from "./hash";
 
 const CHANGED_SINCE_VIEWED = "changed-since-last-view";
 
@@ -33,14 +34,16 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
       return;
     }
 
-    this.currentConfig = payload.config;
+    await this.withLoading(async () => {
+      this.currentConfig = payload.config;
 
-    new Diff2HtmlUI(diffContainer, payload.diffFiles, this.currentConfig.diff2html).draw();
+      new Diff2HtmlUI(diffContainer, payload.diffFiles, this.currentConfig.diff2html).draw();
 
-    this.registerViewedToggleHandlers(diffContainer);
-    this.registerDiffContainerHandlers(diffContainer);
-    await this.hideViewedFiles(diffContainer, payload.viewedState);
-    this.updateFooter();
+      this.registerViewedToggleHandlers(diffContainer);
+      this.registerDiffContainerHandlers(diffContainer);
+      await this.hideViewedFiles(diffContainer, payload.viewedState);
+      this.updateFooter();
+    });
   }
 
   private registerViewedToggleHandlers(diffContainer: HTMLElement): void {
@@ -201,7 +204,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   private async getDiffHash(diffElement: HTMLElement): Promise<string | null> {
     const fileContainer = this.getDiffFileContainer(diffElement);
     const fileContent = fileContainer?.querySelector(Diff2HtmlCssClassElements.Div__DiffFileContent)?.innerHTML;
-    return fileContent ? await getSha1Hash(fileContent) : null;
+    return fileContent ? getSha1Hash(fileContent) : null;
   }
 
   private async sendFileViewedMessage(toggleElement: HTMLInputElement): Promise<void> {
@@ -219,5 +222,15 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
         viewedSha1,
       },
     });
+  }
+
+  private async withLoading(runnable: () => Promise<void>): Promise<void> {
+    const loadingContainer = document.getElementById(SkeletonElementIds.LoadingContainer);
+
+    if (loadingContainer) loadingContainer.style.display = "block";
+
+    await runnable();
+
+    if (loadingContainer) loadingContainer.style.display = "none";
   }
 }
