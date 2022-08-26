@@ -23,7 +23,11 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     }
   }
 
-  public async ping(): Promise<void> {
+  public prepare(): void {
+    this.showLoading(true);
+  }
+
+  public ping(): void {
     console.info("Webview ping!");
     this.postMessageToExtensionFn({ kind: "pong" });
   }
@@ -225,12 +229,19 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   }
 
   private async withLoading(runnable: () => Promise<void>): Promise<void> {
-    const loadingContainer = document.getElementById(SkeletonElementIds.LoadingContainer);
-
-    if (loadingContainer) loadingContainer.style.display = "block";
+    this.showLoading(true);
 
     await runnable();
 
-    if (loadingContainer) loadingContainer.style.display = "none";
+    this.showLoading(false);
+  }
+
+  private showLoading(isVisible: boolean): void {
+    const loadingContainer = document.getElementById(SkeletonElementIds.LoadingContainer);
+    if (!loadingContainer) {
+      return;
+    }
+
+    loadingContainer.style.display = isVisible ? "block" : "none";
   }
 }

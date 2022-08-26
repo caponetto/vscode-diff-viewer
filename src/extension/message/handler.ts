@@ -20,7 +20,7 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
     }
   }
 
-  public async pong(): Promise<void> {
+  public pong(): void {
     console.info("Extension pong!");
   }
 

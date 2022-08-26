@@ -42,6 +42,13 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       return;
     }
 
+    this.postMessageToWebviewWrapper({
+      webview: webviewPanel.webview,
+      message: {
+        kind: "ping",
+      },
+    });
+
     const webviewUri = webviewPanel.webview.asWebviewUri(
       vscode.Uri.joinPath(this.args.extensionContext.extensionUri, this.args.webviewPath)
     );
@@ -66,13 +73,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     });
 
     const webviewContext: WebviewContext = { document: diffDocument, panel: webviewPanel, viewedStateStore };
-
-    this.postMessageToWebviewWrapper({
-      webview: webviewPanel.webview,
-      message: {
-        kind: "ping",
-      },
-    });
 
     this.registerEventHandlers({ webviewContext, messageHandler: messageReceivedHandler });
     this.updateWebview(webviewContext);
@@ -103,32 +103,41 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   }
 
   private updateWebview(webviewContext: WebviewContext): void {
-    const config = extractConfig();
-    const diffFiles = parse(webviewContext.document.getText(), config.diff2html);
-
-    if (diffFiles.length === 0) {
-      webviewContext.panel.dispose();
-      vscode.window.showWarningMessage(
-        `No diff structure found in the file "${basename(webviewContext.document.fileName)}".`
-      );
-      vscode.commands.executeCommand("vscode.openWith", webviewContext.document.uri, "default");
-      return;
-    }
-
-    const viewedState = webviewContext.viewedStateStore.getViewedState();
-
     this.postMessageToWebviewWrapper({
       webview: webviewContext.panel.webview,
       message: {
-        kind: "updateWebview",
-        payload: {
-          config: config,
-          diffFiles: diffFiles,
-          viewedState: viewedState,
-          diffContainer: SkeletonElementIds.DiffContainer,
-        },
+        kind: "prepare",
       },
     });
+
+    setTimeout(() => {
+      const config = extractConfig();
+      const diffFiles = parse(webviewContext.document.getText(), config.diff2html);
+
+      if (diffFiles.length === 0) {
+        webviewContext.panel.dispose();
+        vscode.window.showWarningMessage(
+          `No diff structure found in the file "${basename(webviewContext.document.fileName)}".`
+        );
+        vscode.commands.executeCommand("vscode.openWith", webviewContext.document.uri, "default");
+        return;
+      }
+
+      const viewedState = webviewContext.viewedStateStore.getViewedState();
+
+      this.postMessageToWebviewWrapper({
+        webview: webviewContext.panel.webview,
+        message: {
+          kind: "updateWebview",
+          payload: {
+            config: config,
+            diffFiles: diffFiles,
+            viewedState: viewedState,
+            diffContainer: SkeletonElementIds.DiffContainer,
+          },
+        },
+      });
+    }, 0);
   }
 
   private postMessageToWebviewWrapper(args: { webview: vscode.Webview; message: MessageToWebview }): void {
