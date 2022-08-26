@@ -10,6 +10,7 @@ export interface UpdateWebviewPayload {
 }
 
 export interface MessageToWebviewApi {
-  ping: () => Promise<void>;
+  ping: () => void;
+  prepare: () => void;
   updateWebview: (payload: UpdateWebviewPayload) => Promise<void>;
 }

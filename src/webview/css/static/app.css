@@ -56,4 +56,17 @@ input.changed-since-last-view:before {
   left: 50%;
   text-align: center;
   z-index: 100;
+  animation: blink 1.5s linear infinite;
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
 }
