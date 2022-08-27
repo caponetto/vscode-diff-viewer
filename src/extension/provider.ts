@@ -137,7 +137,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
           },
         },
       });
-    }, 0);
+    }, 500);
   }
 
   private postMessageToWebviewWrapper(args: { webview: vscode.Webview; message: MessageToWebview }): void {
