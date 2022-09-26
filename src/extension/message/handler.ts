@@ -48,13 +48,27 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
   }
 
   private async getUriFromPathInWorkspaceIfExists(path: string): Promise<vscode.Uri | undefined> {
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(this.args.diffDocument.uri);
+    const workspaceFolder = this.findDiffFileWorkspace();
     if (!workspaceFolder) {
       return;
     }
 
     const fullPath = join(workspaceFolder.uri.fsPath, path);
     return this.getUriFromPathIfExists(fullPath);
+  }
+
+  private findDiffFileWorkspace(): vscode.WorkspaceFolder | undefined {
+    const folder = vscode.workspace.getWorkspaceFolder(this.args.diffDocument.uri);
+    if (folder) return folder;
+
+    // in case the diff file comes from a custom virtual file system
+    // try to find if it matches any of the available workspaces using their URI schemes
+    const workspaceSchemes = new Set(vscode.workspace.workspaceFolders?.map((folder) => folder.uri.scheme));
+    for (const scheme of workspaceSchemes) {
+      const workspaceSchemeDiffDocumentUri = this.args.diffDocument.uri.with({ scheme });
+      const folder = vscode.workspace.getWorkspaceFolder(workspaceSchemeDiffDocumentUri);
+      if (folder) return folder;
+    }
   }
 
   private async getUriFromPathIfExists(path: string): Promise<vscode.Uri | undefined> {

@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES5",
+    "target": "ES2015",
     "lib": ["ES6", "DOM", "WebWorker"],
+    "moduleResolution": "node",
     "strict": true,
     "outDir": "dist"
   },
