@@ -8,7 +8,16 @@ body {
   flex-direction: column;
 }
 
-footer {
+body * {
+  font-size: var(--vscode-editor-font-size);
+  line-height: 1.4;
+}
+
+.d2h-diff-table {
+  font-family: var(--vscode-editor-font-family);
+}
+
+body footer {
   position: sticky;
   bottom: 0;
   text-align: right;
@@ -24,7 +33,7 @@ label.d2h-file-collapse {
   position: relative;
 }
 
-input.changed-since-last-view:before {
+body input.changed-since-last-view:before {
   content: "Changed since last view";
   white-space: pre;
   position: absolute;
