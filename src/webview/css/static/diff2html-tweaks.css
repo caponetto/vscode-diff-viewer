@@ -17,11 +17,6 @@ ins {
   z-index: 1;
 }
 
-/* workaround until https://github.com/rtfpessoa/diff2html/pull/445 is merged */
-.d2h-d-none {
-  display: none !important;
-}
-
 /* only show line numbers as clickable when they apply to the newer file */
 .d2h-code-linenumber.d2h-del,
 .d2h-code-linenumber.d2h-info,
