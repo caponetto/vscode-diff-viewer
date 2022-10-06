@@ -1,3 +1,8 @@
+# 1.3.1
+
+- Look harder for matching workspaces
+- Control diff2html font sizes
+
 # 1.3.0
 
 - Cleanups and reload
