@@ -28,6 +28,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     return vscode.window.registerCustomEditorProvider(DiffViewerProvider.VIEW_TYPE, new DiffViewerProvider(args), {
       webviewOptions: {
         retainContextWhenHidden: true,
+        enableFindWidget: true,
       },
       supportsMultipleEditorsPerDocument: false,
     });
