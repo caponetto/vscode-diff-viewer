@@ -1,3 +1,7 @@
+# 1.3.2
+
+- Add ability to search in diff view
+
 # 1.3.1
 
 - Look harder for matching workspaces
