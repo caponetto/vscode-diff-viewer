@@ -13,10 +13,6 @@ body * {
   line-height: 1.4;
 }
 
-.d2h-diff-table {
-  font-family: var(--vscode-editor-font-family);
-}
-
 body footer {
   position: sticky;
   bottom: 0;
