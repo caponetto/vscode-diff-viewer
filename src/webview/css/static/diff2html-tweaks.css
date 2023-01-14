@@ -34,3 +34,7 @@ ins {
 .d2h-file-name {
   cursor: pointer;
 }
+
+.d2h-diff-table {
+  font-family: var(--vscode-editor-font-family);
+}
