@@ -3,7 +3,7 @@ import { basename } from "path";
 import * as vscode from "vscode";
 import { SkeletonElementIds } from "../shared/css/elements";
 import { MessageToExtensionHandler, MessageToWebview } from "../shared/message";
-import { APP_CONFIG_SECTION, extractConfig } from "./configuration";
+import { APP_CONFIG_SECTION, extractConfig, setOutputFormatConfig } from "./configuration";
 import { MessageToExtensionHandlerImpl } from "./message/handler";
 import { buildSkeleton } from "./skeleton";
 import { ViewedStateStore } from "./viewed-state";
@@ -24,14 +24,18 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
   public constructor(private readonly args: DiffViewerProviderArgs) {}
 
-  public static register(args: DiffViewerProviderArgs): vscode.Disposable {
-    return vscode.window.registerCustomEditorProvider(DiffViewerProvider.VIEW_TYPE, new DiffViewerProvider(args), {
-      webviewOptions: {
-        retainContextWhenHidden: true,
-        enableFindWidget: true,
-      },
-      supportsMultipleEditorsPerDocument: false,
-    });
+  public static register(args: DiffViewerProviderArgs): vscode.Disposable[] {
+    return [
+      vscode.window.registerCustomEditorProvider(DiffViewerProvider.VIEW_TYPE, new DiffViewerProvider(args), {
+        webviewOptions: {
+          retainContextWhenHidden: true,
+          enableFindWidget: true,
+        },
+        supportsMultipleEditorsPerDocument: false,
+      }),
+      vscode.commands.registerCommand("diffviewer.showLineByLine", () => setOutputFormatConfig("line-by-line")),
+      vscode.commands.registerCommand("diffviewer.showSideBySide", () => setOutputFormatConfig("side-by-side")),
+    ];
   }
 
   public async resolveCustomTextEditor(

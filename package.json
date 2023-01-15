@@ -42,6 +42,18 @@
     }
   },
   "contributes": {
+    "commands": [
+      {
+        "command": "diffviewer.showLineByLine",
+        "title": "Show diff line by line",
+        "icon": "$(mirror)"
+      },
+      {
+        "command": "diffviewer.showSideBySide",
+        "title": "Show diff side by side",
+        "icon": "$(mirror~disabled)"
+      }
+    ],
     "customEditors": [
       {
         "viewType": "diffViewer",
@@ -121,7 +133,21 @@
           }
         }
       }
-    ]
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "diffviewer.showLineByLine",
+          "group": "navigation@1",
+          "when": "activeCustomEditorId == 'diffViewer' && config.diffviewer.outputFormat == 'side-by-side'"
+        },
+        {
+          "command": "diffviewer.showSideBySide",
+          "group": "navigation@1",
+          "when": "activeCustomEditorId == 'diffViewer' && config.diffviewer.outputFormat == 'line-by-line'"
+        }
+      ]
+    }
   },
   "scripts": {
     "lint": "yarn eslint ./src --ext .ts",
