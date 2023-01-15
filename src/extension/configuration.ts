@@ -69,5 +69,5 @@ export function extractConfig(): AppConfig {
 }
 
 export function setOutputFormatConfig(value: OutputFormatType) {
-  return vscode.workspace.getConfiguration(APP_CONFIG_SECTION).update(requiredConfigSections.outputFormat, value);
+  return vscode.workspace.getConfiguration(APP_CONFIG_SECTION).update(requiredConfigSections.outputFormat, value, true);
 }
