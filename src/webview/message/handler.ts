@@ -58,6 +58,11 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     viewedToggles.forEach((element) => {
       element.addEventListener("change", this.onViewedToggleChangedHandler.bind(this));
     });
+
+    const resetButton = document.getElementById(SkeletonElementIds.ViewedResetButton);
+    if (resetButton) {
+      resetButton.addEventListener("click", this.onResetViewedClickHandler.bind(this));
+    }
   }
 
   private onViewedToggleChangedHandler(event: Event): void {
@@ -72,6 +77,25 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     this.sendFileViewedMessage(viewedToggle);
   }
 
+  private onResetViewedClickHandler(event: Event): void {
+    const button = event.target as HTMLButtonElement;
+    if (!button) {
+      return;
+    }
+
+    const allToggles = this.getViewedToggles();
+    const viewedCount = this.getViewedCount();
+    const targetViewedState = Boolean(viewedCount === 0);
+
+    for (const toggle of Array.from(allToggles)) {
+      if (toggle.checked !== targetViewedState) {
+        toggle.click();
+      }
+    }
+
+    this.updateFooter();
+  }
+
   private scrollDiffFileHeaderIntoView(viewedToggle: HTMLInputElement): void {
     const diffFileHeader = viewedToggle.closest(Diff2HtmlCssClassElements.Div__DiffFileHeader);
     if (!diffFileHeader) {
@@ -82,18 +106,33 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   }
 
   private updateFooter(): void {
-    const footer = document.querySelector("footer");
-    if (!footer) {
+    const indicator = document.getElementById(SkeletonElementIds.ViewedIndicator);
+    if (!indicator) {
       return;
     }
 
-    const allCount = document.querySelectorAll(Diff2HtmlCssClassElements.Input__ViewedToggle).length;
+    const allCount = this.getViewedToggles().length;
     if (allCount === 0) {
       return;
     }
 
-    const viewedCount = document.querySelectorAll(Diff2HtmlCssClassElements.Input__ViewedToggle__Checked).length;
-    footer.textContent = `${viewedCount} / ${allCount} files viewed`;
+    const viewedCount = this.getViewedCount();
+    indicator.textContent = `${viewedCount} / ${allCount} files viewed`;
+
+    const resetButton = document.getElementById(SkeletonElementIds.ViewedResetButton);
+    if (!resetButton) {
+      return;
+    }
+
+    resetButton.textContent = viewedCount === 0 ? "Hide all" : "Reset";
+  }
+
+  private getViewedToggles() {
+    return document.querySelectorAll<HTMLInputElement>(Diff2HtmlCssClassElements.Input__ViewedToggle);
+  }
+
+  private getViewedCount() {
+    return document.querySelectorAll(Diff2HtmlCssClassElements.Input__ViewedToggle__Checked).length;
   }
 
   private registerDiffContainerHandlers(diffContainer: HTMLElement): void {

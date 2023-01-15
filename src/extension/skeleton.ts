@@ -15,7 +15,10 @@ export const buildSkeleton = (webviewUri: vscode.Uri) => `
     <span>Loading...</span>
   </div>
   <div id="${SkeletonElementIds.DiffContainer}"></div>
-  <footer />
+  <footer>
+    <button id="${SkeletonElementIds.ViewedResetButton}">Reset</button>
+    <span id="${SkeletonElementIds.ViewedIndicator}"></span>
+  </footer>
   <script src="${webviewUri}"></script>
 </body>
 </html>
