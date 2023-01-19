@@ -24,7 +24,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
   public constructor(private readonly args: DiffViewerProviderArgs) {}
 
-  public static register(args: DiffViewerProviderArgs): vscode.Disposable[] {
+  public static registerContributions(args: DiffViewerProviderArgs): vscode.Disposable[] {
     return [
       vscode.window.registerCustomEditorProvider(DiffViewerProvider.VIEW_TYPE, new DiffViewerProvider(args), {
         webviewOptions: {
