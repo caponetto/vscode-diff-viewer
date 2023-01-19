@@ -85,7 +85,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
     const allToggles = this.getViewedToggles();
     const viewedCount = this.getViewedCount();
-    const targetViewedState = Boolean(viewedCount === 0);
+    const targetViewedState = viewedCount === 0;
 
     for (const toggle of Array.from(allToggles)) {
       if (toggle.checked !== targetViewedState) {
@@ -124,7 +124,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
       return;
     }
 
-    resetButton.textContent = viewedCount === 0 ? "Hide all" : "Reset";
+    resetButton.textContent = `Mark all as ${viewedCount === 0 ? "viewed" : "unviewed"}`;
   }
 
   private getViewedToggles() {
