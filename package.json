@@ -46,12 +46,12 @@
       {
         "command": "diffviewer.showLineByLine",
         "title": "Show diff line by line",
-        "icon": "$(mirror)"
+        "icon": "$(file)"
       },
       {
         "command": "diffviewer.showSideBySide",
         "title": "Show diff side by side",
-        "icon": "$(mirror~disabled)"
+        "icon": "$(files)"
       }
     ],
     "customEditors": [
