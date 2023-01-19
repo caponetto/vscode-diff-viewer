@@ -29,7 +29,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   }
 
   public ping(): void {
-    console.info("Webview ping!");
+    // console.debug("Webview ping!");
     this.postMessageToExtensionFn({ kind: "pong" });
   }
 
