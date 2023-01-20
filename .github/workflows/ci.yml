@@ -28,7 +28,7 @@ jobs:
         id: version
         shell: bash
         run: |
-          echo ::set-output name=version::$(node -e "console.log(require('./package.json').version);")
+          echo "version=$(node -e "console.log(require('./package.json').version);")" >> $GITHUB_OUTPUT
 
       - name: "Build and Pack"
         run: yarn build:prod && yarn pack:extension
