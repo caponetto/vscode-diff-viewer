@@ -14,6 +14,9 @@ export const buildSkeleton = (webviewUri: vscode.Uri) => `
   <div id="${SkeletonElementIds.LoadingContainer}">
     <span>Loading...</span>
   </div>
+  <div id="${SkeletonElementIds.EmptyMessageContainer}" style="display: none">
+    <span>Empty diff</span>
+  </div>
   <div id="${SkeletonElementIds.DiffContainer}"></div>
   <footer>
     <button id="${SkeletonElementIds.ViewedResetButton}">Reset</button>

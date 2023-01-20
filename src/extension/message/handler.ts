@@ -21,7 +21,7 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
   }
 
   public pong(): void {
-    console.info("Extension pong!");
+    // console.debug("Extension pong!");
   }
 
   public async openFile(payload: { path: string; line?: number }): Promise<void> {

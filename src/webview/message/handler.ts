@@ -25,10 +25,11 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
   public prepare(): void {
     this.showLoading(true);
+    this.showEmpty(false);
   }
 
   public ping(): void {
-    console.info("Webview ping!");
+    // console.debug("Webview ping!");
     this.postMessageToExtensionFn({ kind: "pong" });
   }
 
@@ -39,6 +40,10 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     }
 
     await this.withLoading(async () => {
+      if (payload.diffFiles.length === 0) {
+        this.showEmpty(true);
+      }
+
       this.currentConfig = payload.config;
 
       new Diff2HtmlUI(diffContainer, payload.diffFiles, this.currentConfig.diff2html).draw();
@@ -269,6 +274,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
   private async withLoading(runnable: () => Promise<void>): Promise<void> {
     this.showLoading(true);
+    this.showEmpty(false);
 
     await runnable();
 
@@ -282,5 +288,14 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     }
 
     loadingContainer.style.display = isVisible ? "block" : "none";
+  }
+
+  private showEmpty(isVisible: boolean): void {
+    const emptyMessageContainer = document.getElementById(SkeletonElementIds.EmptyMessageContainer);
+    if (!emptyMessageContainer) {
+      return;
+    }
+
+    emptyMessageContainer.style.display = isVisible ? "block" : "none";
   }
 }

@@ -117,9 +117,10 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
     setTimeout(() => {
       const config = extractConfig();
-      const diffFiles = parse(webviewContext.document.getText(), config.diff2html);
+      const text = webviewContext.document.getText();
+      const diffFiles = parse(text, config.diff2html);
 
-      if (diffFiles.length === 0) {
+      if (diffFiles.length === 0 && text.trim() !== "") {
         webviewContext.panel.dispose();
         vscode.window.showWarningMessage(
           `No diff structure found in the file "${basename(webviewContext.document.fileName)}".`
