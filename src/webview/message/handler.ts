@@ -9,6 +9,7 @@ import { UpdateWebviewPayload } from "./api";
 import { getSha1Hash } from "./hash";
 
 const CHANGED_SINCE_VIEWED = "changed-since-last-view";
+const SELECTED = "selected";
 
 export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   private currentConfig: AppConfig | undefined = undefined;
@@ -64,10 +65,12 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
       element.addEventListener("change", this.onViewedToggleChangedHandler.bind(this));
     });
 
-    const resetButton = document.getElementById(SkeletonElementIds.ViewedResetButton);
-    if (resetButton) {
-      resetButton.addEventListener("click", this.onResetViewedClickHandler.bind(this));
+    const markAllViewedCheckbox = document.getElementById(SkeletonElementIds.MarkAllViewedCheckbox);
+    if (!markAllViewedCheckbox) {
+      return;
     }
+
+    markAllViewedCheckbox.addEventListener("change", this.onMarkAllViewedChangedHandler.bind(this));
   }
 
   private onViewedToggleChangedHandler(event: Event): void {
@@ -82,23 +85,20 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     this.sendFileViewedMessage(viewedToggle);
   }
 
-  private onResetViewedClickHandler(event: Event): void {
-    const button = event.target as HTMLButtonElement;
-    if (!button) {
+  private onMarkAllViewedChangedHandler(event: Event): void {
+    const markAllViewedCheckbox = event.target as HTMLInputElement;
+    if (!markAllViewedCheckbox) {
       return;
     }
 
+    const isChecked = markAllViewedCheckbox.checked;
     const allToggles = this.getViewedToggles();
-    const viewedCount = this.getViewedCount();
-    const targetViewedState = viewedCount === 0;
 
     for (const toggle of Array.from(allToggles)) {
-      if (toggle.checked !== targetViewedState) {
+      if (toggle.checked !== isChecked) {
         toggle.click();
       }
     }
-
-    this.updateFooter();
   }
 
   private scrollDiffFileHeaderIntoView(viewedToggle: HTMLInputElement): void {
@@ -124,12 +124,26 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     const viewedCount = this.getViewedCount();
     indicator.textContent = `${viewedCount} / ${allCount} files viewed`;
 
-    const resetButton = document.getElementById(SkeletonElementIds.ViewedResetButton);
-    if (!resetButton) {
+    const markAllViewedCheckbox = document.getElementById(SkeletonElementIds.MarkAllViewedCheckbox) as HTMLInputElement;
+    if (!markAllViewedCheckbox) {
       return;
     }
 
-    resetButton.textContent = `Mark all as ${viewedCount === 0 ? "viewed" : "unviewed"}`;
+    markAllViewedCheckbox.checked = viewedCount === allCount;
+
+    const markAllViewedContainer = document.getElementById(
+      SkeletonElementIds.MarkAllViewedContainer
+    ) as HTMLLabelElement;
+
+    if (!markAllViewedContainer) {
+      return;
+    }
+
+    if (markAllViewedCheckbox.checked) {
+      markAllViewedContainer.classList.add(SELECTED);
+    } else {
+      markAllViewedContainer.classList.remove(SELECTED);
+    }
   }
 
   private getViewedToggles() {

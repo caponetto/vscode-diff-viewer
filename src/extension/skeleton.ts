@@ -19,8 +19,12 @@ export const buildSkeleton = (webviewUri: vscode.Uri) => `
   </div>
   <div id="${SkeletonElementIds.DiffContainer}"></div>
   <footer>
-    <button id="${SkeletonElementIds.ViewedResetButton}">Reset</button>
     <span id="${SkeletonElementIds.ViewedIndicator}"></span>
+    <label id="${SkeletonElementIds.MarkAllViewedContainer}">
+      <input id="${SkeletonElementIds.MarkAllViewedCheckbox}" type="checkbox" name="mark-all-as-viewed">
+        Mark all as viewed
+      </input>
+    </label>
   </footer>
   <script src="${webviewUri}"></script>
 </body>
