@@ -16,13 +16,13 @@ body * {
 
 body footer {
   position: sticky;
-  bottom: 2px;
+  bottom: 0px;
   padding: 6px 8px 4px 8px;
   border-top: 1px solid #eee;
   margin-top: auto;
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   justify-content: flex-end;
   background-color: white !important;
   z-index: 1;
@@ -31,6 +31,22 @@ body footer {
 #viewed-indicator {
   font-size: smaller;
   margin-right: 8px;
+}
+
+#viewed-progress-container {
+  height: 12px;
+  width: 128px;
+  margin-right: 8px;
+  border-radius: 3px;
+  background: lightgray;
+}
+
+#viewed-progress {
+  height: 100%;
+  width: 0;
+  border-radius: 3px;
+  background: #1f6fea;
+  transition: width 0.4s ease;
 }
 
 #mark-all-viewed-container {
