@@ -124,6 +124,12 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     const viewedCount = this.getViewedCount();
     indicator.textContent = `${viewedCount} / ${allCount} files viewed`;
 
+    const viewedProgressBar = document.getElementById(SkeletonElementIds.ViewedProgress);
+    if (viewedProgressBar) {
+      const progressPercentage = Math.round((viewedCount / allCount) * 100);
+      viewedProgressBar.style.width = `${progressPercentage}%`;
+    }
+
     const markAllViewedCheckbox = document.getElementById(SkeletonElementIds.MarkAllViewedCheckbox) as HTMLInputElement;
     if (!markAllViewedCheckbox) {
       return;

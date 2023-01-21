@@ -5,4 +5,6 @@ export enum SkeletonElementIds {
   MarkAllViewedContainer = "mark-all-viewed-container",
   MarkAllViewedCheckbox = "mark-all-viewed-checkbox",
   ViewedIndicator = "viewed-indicator",
+  ViewedProgressContainer = "viewed-progress-container",
+  ViewedProgress = "viewed-progress",
 }
