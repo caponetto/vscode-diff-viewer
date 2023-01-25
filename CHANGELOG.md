@@ -1,3 +1,12 @@
+# 1.4.0
+
+- Fix control of diff2html font
+- Show empty diffs
+- Add reset button to viewed count
+- Add a side-by-side toggle
+- Minor style improvements
+- Add progress bar for viewed files
+
 # 1.3.2
 
 - Add ability to search in diff view
