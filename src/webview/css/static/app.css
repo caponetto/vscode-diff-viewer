@@ -6,7 +6,7 @@ body {
   padding: 1px;
   display: flex;
   flex-direction: column;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
 }
 
 body * {
