@@ -1,3 +1,7 @@
+# 1.4.1
+
+- Fix line numbers shift
+
 # 1.4.0
 
 - Fix control of diff2html font
