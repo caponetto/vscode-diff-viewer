@@ -2,7 +2,7 @@
   "name": "vscode-diff-viewer",
   "displayName": "Diff Viewer",
   "description": "Visualize git diff files in VS Code",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "license": "MIT",
   "publisher": "caponetto",
   "homepage": "https://github.com/caponetto/vscode-diff-viewer",
