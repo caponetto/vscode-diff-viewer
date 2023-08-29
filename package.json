@@ -162,7 +162,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "diff2html": "^3.4.40",
+    "diff2html": "^3.4.41",
     "highlight.js": "^11.8.0"
   },
   "devDependencies": {
