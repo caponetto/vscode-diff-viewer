@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { SkeletonElementIds } from "../shared/css/elements";
 
-export const buildSkeleton = (webviewUri: vscode.Uri) => `
+export const buildSkeleton = (args: { webviewUri: vscode.Uri; cssUris: vscode.Uri[] }) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,13 +9,14 @@ export const buildSkeleton = (webviewUri: vscode.Uri) => `
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  ${args.cssUris.map((cssUri) => `<link rel="stylesheet" href="${cssUri}">`).join("\n")}
 </head>
 <body>
   <div id="${SkeletonElementIds.LoadingContainer}">
     <span>Loading...</span>
   </div>
   <div id="${SkeletonElementIds.EmptyMessageContainer}" style="display: none">
-    <span>Empty diff</span>
+    <span>Empty diff file</span>
   </div>
   <div id="${SkeletonElementIds.DiffContainer}"></div>
   <footer>
@@ -29,7 +30,7 @@ export const buildSkeleton = (webviewUri: vscode.Uri) => `
       </input>
     </label>
   </footer>
-  <script src="${webviewUri}"></script>
+  <script src="${args.webviewUri}"></script>
 </body>
 </html>
 `;

@@ -8,3 +8,13 @@ export enum SkeletonElementIds {
   ViewedProgressContainer = "viewed-progress-container",
   ViewedProgress = "viewed-progress",
 }
+
+export const CssPropertiesBasedOnTheme = [
+  "--diff-viewer--background",
+  "--diff-viewer--foreground",
+  "--diff-viewer--border",
+  "--diff-viewer--primary",
+  "--diff-viewer--secondary",
+  "--diff-viewer--selection",
+  "--diff-viewer--highlight",
+];
