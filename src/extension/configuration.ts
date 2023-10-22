@@ -1,5 +1,5 @@
 import { Diff2HtmlConfig } from "diff2html";
-import { LineMatchingType, OutputFormatType } from "diff2html/lib/types";
+import { ColorSchemeType, LineMatchingType, OutputFormatType } from "diff2html/lib/types";
 import * as vscode from "vscode";
 
 export const APP_CONFIG_SECTION = "diffviewer";
@@ -13,6 +13,7 @@ const requiredConfigSections = {
   maxLineSizeInBlockForComparison: "maxLineSizeInBlockForComparison",
   maxLineLengthHighlight: "maxLineLengthHighlight",
   renderNothingWhenEmpty: "renderNothingWhenEmpty",
+  colorScheme: "colorScheme",
 } as const;
 
 type RequiredConfigIds = typeof requiredConfigSections[keyof typeof requiredConfigSections];
@@ -31,6 +32,7 @@ const DEFAULT_CONFIG: AppConfig = {
     maxLineSizeInBlockForComparison: 200,
     maxLineLengthHighlight: 10000,
     renderNothingWhenEmpty: false,
+    colorScheme: ColorSchemeType.LIGHT,
   },
 };
 
@@ -64,6 +66,9 @@ export function extractConfig(): AppConfig {
       renderNothingWhenEmpty: vscode.workspace
         .getConfiguration(APP_CONFIG_SECTION)
         .get<boolean>(requiredConfigSections.renderNothingWhenEmpty, DEFAULT_CONFIG.diff2html.renderNothingWhenEmpty),
+      colorScheme: vscode.workspace
+        .getConfiguration(APP_CONFIG_SECTION)
+        .get<ColorSchemeType>(requiredConfigSections.colorScheme, DEFAULT_CONFIG.diff2html.colorScheme),
     },
   };
 }

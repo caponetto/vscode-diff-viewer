@@ -82,6 +82,15 @@
       {
         "title": "DiffViewer",
         "properties": {
+          "diffviewer.colorScheme": {
+            "type": "string",
+            "default": "light",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "description": "The color scheme to visualize the diff"
+          },
           "diffviewer.outputFormat": {
             "type": "string",
             "default": "line-by-line",
@@ -162,8 +171,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "diff2html": "^3.4.41",
-    "highlight.js": "^11.8.0"
+    "diff2html": "3.4.45"
   },
   "devDependencies": {
     "@jest/types": "^29.5.0",

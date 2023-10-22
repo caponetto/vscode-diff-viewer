@@ -1,12 +1,21 @@
 import { parse } from "diff2html";
+import { ColorSchemeType } from "diff2html/lib/types";
 import { basename } from "path";
 import * as vscode from "vscode";
 import { SkeletonElementIds } from "../shared/css/elements";
 import { MessageToExtensionHandler, MessageToWebview } from "../shared/message";
-import { APP_CONFIG_SECTION, extractConfig, setOutputFormatConfig } from "./configuration";
+import { APP_CONFIG_SECTION, AppConfig, extractConfig, setOutputFormatConfig } from "./configuration";
 import { MessageToExtensionHandlerImpl } from "./message/handler";
 import { buildSkeleton } from "./skeleton";
 import { ViewedStateStore } from "./viewed-state";
+import {
+  APP_CSS_FILE_NAME,
+  DIFF2HTML_DEP_CSS_FILE_NAME,
+  DIFF2HTML_TWEAKS_CSS_FILE_NAME,
+  HIGHLIGHT_JS_DEP_CSS_FILE_NAME,
+  RESET_CSS_FILE_NAME,
+  STYLES_FOLDER_NAME,
+} from "../shared/css/files";
 
 interface DiffViewerProviderArgs {
   extensionContext: vscode.ExtensionContext;
@@ -54,15 +63,9 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       },
     });
 
-    const webviewUri = webviewPanel.webview.asWebviewUri(
-      vscode.Uri.joinPath(this.args.extensionContext.extensionUri, this.args.webviewPath)
-    );
-
     webviewPanel.webview.options = {
       enableScripts: true,
     };
-
-    webviewPanel.webview.html = buildSkeleton(webviewUri);
 
     const viewedStateStore = new ViewedStateStore({
       context: this.args.extensionContext,
@@ -115,8 +118,17 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       },
     });
 
+    const config = extractConfig();
+
+    const webviewUri = webviewContext.panel.webview.asWebviewUri(
+      vscode.Uri.joinPath(this.args.extensionContext.extensionUri, this.args.webviewPath)
+    );
+
+    const cssUris = this.resolveCssUris({ webview: webviewContext.panel.webview, config });
+
+    webviewContext.panel.webview.html = buildSkeleton({ webviewUri, cssUris });
+
     setTimeout(() => {
-      const config = extractConfig();
       const text = webviewContext.document.getText();
       const diffFiles = parse(text, config.diff2html);
 
@@ -144,6 +156,32 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
         },
       });
     }, 100);
+  }
+
+  private resolveCssUris(args: { webview: vscode.Webview; config: AppConfig }): vscode.Uri[] {
+    const appTheme = args.config.diff2html.colorScheme === ColorSchemeType.DARK ? "dark" : "light";
+    // IMPORTANT: Order matters!
+    return [
+      args.webview.asWebviewUri(
+        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, RESET_CSS_FILE_NAME)
+      ),
+      args.webview.asWebviewUri(
+        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, APP_CSS_FILE_NAME)
+      ),
+      args.webview.asWebviewUri(
+        vscode.Uri.joinPath(
+          this.args.extensionContext.extensionUri,
+          STYLES_FOLDER_NAME,
+          HIGHLIGHT_JS_DEP_CSS_FILE_NAME(appTheme)
+        )
+      ),
+      args.webview.asWebviewUri(
+        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, DIFF2HTML_DEP_CSS_FILE_NAME)
+      ),
+      args.webview.asWebviewUri(
+        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, DIFF2HTML_TWEAKS_CSS_FILE_NAME)
+      ),
+    ];
   }
 
   private postMessageToWebviewWrapper(args: { webview: vscode.Webview; message: MessageToWebview }): void {

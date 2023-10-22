@@ -38,3 +38,23 @@ ins {
 .d2h-diff-table {
   font-family: var(--vscode-editor-font-family);
 }
+
+.d2h-dark-color-scheme .d2h-ins {
+  background-color: #153f27;
+}
+
+.d2h-dark-color-scheme .d2h-del {
+  background-color: #3a1d20;
+}
+
+.d2h-dark-color-scheme .d2h-info {
+  background-color: #162844;
+}
+
+.d2h-dark-color-scheme .d2h-file-diff .d2h-ins.d2h-change {
+  background-color: #1c512a;
+}
+
+.d2h-dark-color-scheme .d2h-file-diff .d2h-del.d2h-change {
+  background-color: #543f1b;
+}

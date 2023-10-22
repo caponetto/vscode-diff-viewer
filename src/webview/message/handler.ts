@@ -1,9 +1,11 @@
+import { ColorSchemeType } from "diff2html/lib/types";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
 import { AppConfig } from "../../extension/configuration";
 import { ViewedState } from "../../extension/viewed-state";
-import { SkeletonElementIds } from "../../shared/css/elements";
+import { CssPropertiesBasedOnTheme, SkeletonElementIds } from "../../shared/css/elements";
 import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
 import { MessageToExtension, MessageToWebview, MessageToWebviewHandler } from "../../shared/message";
+import { AppTheme } from "../../shared/types";
 import { Diff2HtmlCssClassElements } from "../css/elements";
 import { UpdateWebviewPayload } from "./api";
 import { getSha1Hash } from "./hash";
@@ -30,7 +32,6 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
   }
 
   public ping(): void {
-    // console.debug("Webview ping!");
     this.postMessageToExtensionFn({ kind: "pong" });
   }
 
@@ -47,12 +48,25 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
       this.currentConfig = payload.config;
 
-      new Diff2HtmlUI(diffContainer, payload.diffFiles, this.currentConfig.diff2html).draw();
+      const appTheme = this.currentConfig.diff2html.colorScheme === ColorSchemeType.DARK ? "dark" : "light";
+      this.setupTheme(appTheme);
+
+      const diff2html = new Diff2HtmlUI(diffContainer, payload.diffFiles, this.currentConfig.diff2html);
+      diff2html.draw();
 
       this.registerViewedToggleHandlers(diffContainer);
       this.registerDiffContainerHandlers(diffContainer);
       await this.hideViewedFiles(diffContainer, payload.viewedState);
       this.updateFooter();
+    });
+  }
+
+  private setupTheme(theme: AppTheme): void {
+    const root = document.documentElement;
+
+    CssPropertiesBasedOnTheme.forEach((property) => {
+      const value = getComputedStyle(root).getPropertyValue(`${property}--${theme}`);
+      root.style.setProperty(property, value);
     });
   }
 
