@@ -1,3 +1,11 @@
+# 1.5.0
+
+- ?
+
+# 1.4.2
+
+- Update diff2html version which handles unknown filetypes gracefully
+
 # 1.4.1
 
 - Fix line numbers shift
