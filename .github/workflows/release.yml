@@ -28,7 +28,7 @@ jobs:
 
       - name: "Publish :: VS Code Marketplace"
         run: |
-          npm install -g vsce
+          npm install -g @vscode/vsce
           vsce publish -p ${{ secrets.VSCODE_MP_TOKEN }} --packagePath ./dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
 
       - name: "Publish :: Open VSX Registry"
