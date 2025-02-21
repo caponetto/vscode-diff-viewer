@@ -38,7 +38,7 @@ jobs:
 
       - name: "Upload vsix (Ubuntu only)"
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: vscode_diff_viewer_v${{ steps.version.outputs.version }}
           path: dist/vscode_diff_viewer_v${{ steps.version.outputs.version }}.vsix
