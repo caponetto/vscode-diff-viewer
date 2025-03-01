@@ -19,7 +19,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: "Build and Pack"
-        run: yarn build:prod && yarn pack:extension
+        run: npm run build:prod && npm run pack:extension
 
       - name: "Less is more"
         uses: caponetto/less-is-more@v1

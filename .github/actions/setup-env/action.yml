@@ -5,23 +5,23 @@ runs:
   using: "composite"
   steps:
     - name: "Setup :: Node"
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: 22
-        cache: "yarn"
+        cache: "npm"
 
     - name: "Bootstrap"
       shell: bash
       run: |
-        yarn install
+        npm install
 
-    - name: "Check :: yarn.lock"
+    - name: "Check :: lock"
       shell: bash
       run: |
-        git diff yarn.lock;
-        [ "0" == "$(git diff yarn.lock | wc -l | tr -d ' ')" ]
+        git diff package-lock.json;
+        [ "0" == "$(git diff package-lock.json | wc -l | tr -d ' ')" ]
 
     - name: "Check :: format"
       shell: bash
       run: |
-        yarn format:check
+        npm run format:check

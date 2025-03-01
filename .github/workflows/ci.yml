@@ -31,10 +31,10 @@ jobs:
           echo "version=$(node -e "console.log(require('./package.json').version);")" >> $GITHUB_OUTPUT
 
       - name: "Build and Pack"
-        run: yarn build:prod && yarn pack:extension
+        run: npm run build:prod && npm run pack:extension
 
       - name: "Test"
-        run: yarn test
+        run: npm run test
 
       - name: "Upload vsix (Ubuntu only)"
         if: matrix.os == 'ubuntu-latest'
