@@ -1,6 +1,7 @@
 import { MessageToExtensionApi } from "../extension/message/api";
 import { MessageToWebviewApi } from "../webview/message/api";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FunctionArgsType<T> = T extends () => any ? never : T extends (args: infer A) => any ? A : never;
 
 type DistributeMessageApiType<T> = {
