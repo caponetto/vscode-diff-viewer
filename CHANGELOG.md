@@ -1,3 +1,8 @@
+# 1.6.0
+
+- Bump several dependencies
+- Fix editor not being reloaded when dragging the tab
+
 # 1.5.0
 
 - Add dark mode
