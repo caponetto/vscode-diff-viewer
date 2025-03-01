@@ -24,7 +24,7 @@ jobs:
         uses: ./.github/actions/setup-env
 
       - name: "Build and Pack"
-        run: yarn build:prod && yarn pack:extension
+        run: npm run build:prod && npm run pack:extension
 
       - name: "Publish :: VS Code Marketplace"
         run: |
