@@ -2,6 +2,7 @@ import { getSha1Hash } from "../hash";
 import { webcrypto } from "crypto";
 
 // mock window.crypto
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 global.window = { crypto: webcrypto } as any;
 
 describe("hash :: getSha1Hash", () => {

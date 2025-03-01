@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { SkeletonElementIds } from "../shared/css/elements";
 
-export const buildSkeleton = (args: { webviewUri: vscode.Uri; cssUris: vscode.Uri[] }) => `
+export const buildSkeleton = (args: { webviewUri: vscode.Uri; cssUris: vscode.Uri[] }): string => `
 <!DOCTYPE html>
 <html lang="en">
 <head>

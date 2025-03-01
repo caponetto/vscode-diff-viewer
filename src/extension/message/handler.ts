@@ -14,6 +14,7 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
 
   public onMessageReceived(message: MessageToExtension): void {
     if ("payload" in message) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this[message.kind](message.payload as any);
     } else {
       this[message.kind]();
@@ -85,6 +86,7 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
       await vscode.workspace.fs.stat(uri);
       return true;
     } catch (e) {
+      console.error(e);
       return false;
     }
   }

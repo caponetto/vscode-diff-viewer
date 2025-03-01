@@ -4,7 +4,8 @@
     "lib": ["ES6", "DOM", "WebWorker"],
     "moduleResolution": "node",
     "strict": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "esModuleInterop": true
   },
   "include": ["src"],
   "exclude": ["./node_modules"]

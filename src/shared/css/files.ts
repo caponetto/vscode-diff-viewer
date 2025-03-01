@@ -8,5 +8,5 @@ export const RESET_CSS_FILE_NAME = "reset.css";
 export const APP_CSS_FILE_NAME = "app.css";
 export const DIFF2HTML_TWEAKS_CSS_FILE_NAME = "diff2html-tweaks.css";
 export const DIFF2HTML_DEP_CSS_FILE_NAME = `${DIFF2HTML_VERSION}.min.css`;
-export const HIGHLIGHT_JS_DEP_CSS_FILE_NAME = (theme: AppTheme) =>
+export const HIGHLIGHT_JS_DEP_CSS_FILE_NAME = (theme: AppTheme): string =>
   `${HIGHLIGHTJS_VERSION}-github${theme === "dark" ? "-dark" : ""}.min.css`;

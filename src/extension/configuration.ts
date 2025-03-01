@@ -73,6 +73,6 @@ export function extractConfig(): AppConfig {
   };
 }
 
-export function setOutputFormatConfig(value: OutputFormatType) {
+export function setOutputFormatConfig(value: OutputFormatType): Thenable<void> {
   return vscode.workspace.getConfiguration(APP_CONFIG_SECTION).update(requiredConfigSections.outputFormat, value, true);
 }
