@@ -9,7 +9,7 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
       diffDocument: vscode.TextDocument;
       viewedStateStore: ViewedStateStore;
       postMessageToWebviewFn: (message: MessageToWebview) => void;
-    }
+    },
   ) {}
 
   public onMessageReceived(message: MessageToExtension): void {
@@ -30,7 +30,7 @@ export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler 
 
     if (!uri) {
       vscode.window.showWarningMessage(
-        `Cannot locate the file "${basename(payload.path)}" neither in the workspace nor by the specified path.`
+        `Cannot locate the file "${basename(payload.path)}" neither in the workspace nor by the specified path.`,
       );
       return;
     }

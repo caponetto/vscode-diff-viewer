@@ -58,7 +58,12 @@
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-family:
+    Source Sans Pro,
+    Helvetica Neue,
+    Helvetica,
+    Arial,
+    sans-serif;
   height: 35px;
   padding: 5px 10px;
 }

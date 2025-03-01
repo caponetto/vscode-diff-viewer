@@ -50,7 +50,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   public async resolveCustomTextEditor(
     diffDocument: vscode.TextDocument,
     webviewPanel: vscode.WebviewPanel,
-    token: vscode.CancellationToken
+    token: vscode.CancellationToken,
   ): Promise<void> {
     if (token.isCancellationRequested) {
       return;
@@ -104,7 +104,10 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
         }
 
         this.updateWebview(args.webviewContext);
-      })
+      }),
+      vscode.window.tabGroups.onDidChangeTabs(() => {
+        this.updateWebview(args.webviewContext);
+      }),
     );
 
     args.webviewContext.panel.onDidDispose(() => disposables.dispose());
@@ -121,7 +124,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     const config = extractConfig();
 
     const webviewUri = webviewContext.panel.webview.asWebviewUri(
-      vscode.Uri.joinPath(this.args.extensionContext.extensionUri, this.args.webviewPath)
+      vscode.Uri.joinPath(this.args.extensionContext.extensionUri, this.args.webviewPath),
     );
 
     const cssUris = this.resolveCssUris({ webview: webviewContext.panel.webview, config });
@@ -135,7 +138,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       if (diffFiles.length === 0 && text.trim() !== "") {
         webviewContext.panel.dispose();
         vscode.window.showWarningMessage(
-          `No diff structure found in the file "${basename(webviewContext.document.fileName)}".`
+          `No diff structure found in the file "${basename(webviewContext.document.fileName)}".`,
         );
         vscode.commands.executeCommand("vscode.openWith", webviewContext.document.uri, "default");
         return;
@@ -163,23 +166,27 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     // IMPORTANT: Order matters!
     return [
       args.webview.asWebviewUri(
-        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, RESET_CSS_FILE_NAME)
+        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, RESET_CSS_FILE_NAME),
       ),
       args.webview.asWebviewUri(
-        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, APP_CSS_FILE_NAME)
+        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, APP_CSS_FILE_NAME),
       ),
       args.webview.asWebviewUri(
         vscode.Uri.joinPath(
           this.args.extensionContext.extensionUri,
           STYLES_FOLDER_NAME,
-          HIGHLIGHT_JS_DEP_CSS_FILE_NAME(appTheme)
-        )
+          HIGHLIGHT_JS_DEP_CSS_FILE_NAME(appTheme),
+        ),
       ),
       args.webview.asWebviewUri(
-        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, DIFF2HTML_DEP_CSS_FILE_NAME)
+        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, DIFF2HTML_DEP_CSS_FILE_NAME),
       ),
       args.webview.asWebviewUri(
-        vscode.Uri.joinPath(this.args.extensionContext.extensionUri, STYLES_FOLDER_NAME, DIFF2HTML_TWEAKS_CSS_FILE_NAME)
+        vscode.Uri.joinPath(
+          this.args.extensionContext.extensionUri,
+          STYLES_FOLDER_NAME,
+          DIFF2HTML_TWEAKS_CSS_FILE_NAME,
+        ),
       ),
     ];
   }

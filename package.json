@@ -190,7 +190,7 @@
     "husky": "^8.0.3",
     "jest": "^29.5.0",
     "path-browserify": "1.0.1",
-    "prettier": "2.7.1",
+    "prettier": "3.5.2",
     "rimraf": "^5.0.1",
     "source-map-loader": "^4.0.1",
     "style-loader": "^3.3.3",

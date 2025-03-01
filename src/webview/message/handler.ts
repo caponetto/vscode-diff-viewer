@@ -72,7 +72,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
   private registerViewedToggleHandlers(diffContainer: HTMLElement): void {
     const viewedToggles = diffContainer.querySelectorAll<HTMLInputElement>(
-      Diff2HtmlCssClassElements.Input__ViewedToggle
+      Diff2HtmlCssClassElements.Input__ViewedToggle,
     );
 
     viewedToggles.forEach((element) => {
@@ -152,7 +152,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     markAllViewedCheckbox.checked = viewedCount === allCount;
 
     const markAllViewedContainer = document.getElementById(
-      SkeletonElementIds.MarkAllViewedContainer
+      SkeletonElementIds.MarkAllViewedContainer,
     ) as HTMLLabelElement;
 
     if (!markAllViewedContainer) {
@@ -244,7 +244,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
     }
 
     const lineNumberValue = lineNumberElement.querySelector(
-      Diff2HtmlCssClassElements.Div__LineNumberRightOnLineByLine
+      Diff2HtmlCssClassElements.Div__LineNumberRightOnLineByLine,
     )?.textContent;
     if (!lineNumberValue) {
       return;
@@ -268,7 +268,7 @@ export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
 
   private async hideViewedFiles(diffContainer: HTMLElement, viewedState: ViewedState) {
     const viewedToggles = diffContainer.querySelectorAll<HTMLInputElement>(
-      Diff2HtmlCssClassElements.Input__ViewedToggle
+      Diff2HtmlCssClassElements.Input__ViewedToggle,
     );
     for (const toggle of Array.from(viewedToggles)) {
       const fileName = this.getDiffElementFileName(toggle);

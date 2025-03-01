@@ -16,7 +16,7 @@ const requiredConfigSections = {
   colorScheme: "colorScheme",
 } as const;
 
-type RequiredConfigIds = typeof requiredConfigSections[keyof typeof requiredConfigSections];
+type RequiredConfigIds = (typeof requiredConfigSections)[keyof typeof requiredConfigSections];
 
 export type RequiredDiff2HtmlConfig = Required<Pick<Diff2HtmlConfig, RequiredConfigIds>>;
 
@@ -58,7 +58,7 @@ export function extractConfig(): AppConfig {
         .getConfiguration(APP_CONFIG_SECTION)
         .get<number>(
           requiredConfigSections.maxLineSizeInBlockForComparison,
-          DEFAULT_CONFIG.diff2html.maxLineSizeInBlockForComparison
+          DEFAULT_CONFIG.diff2html.maxLineSizeInBlockForComparison,
         ),
       maxLineLengthHighlight: vscode.workspace
         .getConfiguration(APP_CONFIG_SECTION)
