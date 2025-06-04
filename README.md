@@ -2,7 +2,7 @@
 
 ![vs-code-marketplace-version](https://img.shields.io/visual-studio-marketplace/v/caponetto.vscode-diff-viewer.svg?color=purple&label=release)
 ![vs-code-marketplace-installs](https://img.shields.io/visual-studio-marketplace/i/caponetto.vscode-diff-viewer.svg?color=red)
-![vs-code-support](https://img.shields.io/badge/Visual%20Studio%20Code-1.66.0+-blue.svg)
+![vs-code-support](https://img.shields.io/badge/Visual%20Studio%20Code-1.75.0+-blue.svg)
 ![github-ci](https://github.com/caponetto/vscode-diff-viewer/workflows/CI/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
