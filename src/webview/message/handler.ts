@@ -310,21 +310,21 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     this.showLoading(false);
   }
 
-  private showLoading(isVisible: boolean): void {
+  private showLoading(isLoading: boolean): void {
     const loadingContainer = document.getElementById(SkeletonElementIds.LoadingContainer);
     if (!loadingContainer) {
       return;
     }
 
-    loadingContainer.style.display = isVisible ? "block" : "none";
+    loadingContainer.style.display = isLoading ? "block" : "none";
   }
 
-  private showEmpty(isVisible: boolean): void {
+  private showEmpty(isEmpty: boolean): void {
     const emptyMessageContainer = document.getElementById(SkeletonElementIds.EmptyMessageContainer);
     if (!emptyMessageContainer) {
       return;
     }
 
-    emptyMessageContainer.style.display = isVisible ? "block" : "none";
+    emptyMessageContainer.style.display = isEmpty ? "block" : "none";
   }
 }
