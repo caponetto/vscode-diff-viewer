@@ -5,7 +5,6 @@ import { ViewedState } from "../../extension/viewed-state";
 export interface UpdateWebviewPayload {
   config: AppConfig;
   diffFiles: DiffFile[];
-  diffContainer: string;
   viewedState: ViewedState;
 }
 

@@ -2,7 +2,6 @@ import { parse } from "diff2html";
 import { ColorSchemeType } from "diff2html/lib/types";
 import { basename } from "path";
 import * as vscode from "vscode";
-import { SkeletonElementIds } from "../shared/css/elements";
 import { MessageToExtensionHandler, MessageToWebview } from "../shared/message";
 import { APP_CONFIG_SECTION, AppConfig, extractConfig, setOutputFormatConfig } from "./configuration";
 import { MessageToExtensionHandlerImpl } from "./message/handler";
@@ -154,7 +153,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
             config: config,
             diffFiles: diffFiles,
             viewedState: viewedState,
-            diffContainer: SkeletonElementIds.DiffContainer,
           },
         },
       });

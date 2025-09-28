@@ -31,7 +31,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
   }
 
   public async updateWebview(payload: UpdateWebviewPayload): Promise<void> {
-    const diffContainer = document.getElementById(payload.diffContainer);
+    const diffContainer = document.getElementById(SkeletonElementIds.DiffContainer);
     if (!diffContainer) {
       return;
     }
