@@ -7,6 +7,7 @@ import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../s
 import { MessageToExtension, MessageToWebviewHandler } from "../../shared/message";
 import { GenericMessageHandlerImpl } from "../../shared/message-handler";
 import { AppTheme } from "../../shared/types";
+import { Diff2HtmlCssClasses } from "../css/classes";
 import { Diff2HtmlCssClassElements } from "../css/elements";
 import { UpdateWebviewPayload } from "./api";
 import { getSha1Hash } from "./hash";
@@ -270,12 +271,22 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       if (fileName && viewedState[fileName]) {
         const diffHash = await this.getDiffHash(toggle);
         if (diffHash === viewedState[fileName]) {
-          toggle.click();
+          this.updateDiff2HtmlFileCollapsed(toggle, true);
         } else {
           toggle.classList.add(CHANGED_SINCE_VIEWED);
         }
       }
     }
+  }
+
+  private updateDiff2HtmlFileCollapsed(toggleElement: HTMLInputElement, collapse: boolean) {
+    // do the same thing that diff2html does to collapse or expand one file
+    toggleElement.checked = collapse;
+    const fileContainer = this.getDiffFileContainer(toggleElement);
+    const label = fileContainer?.querySelector(Diff2HtmlCssClassElements.Label__ViewedToggle);
+    label?.classList.toggle(Diff2HtmlCssClasses.Input__ViewedToggle__Selected, collapse);
+    const fileContent = fileContainer?.querySelector(Diff2HtmlCssClassElements.Div__DiffFileContent);
+    fileContent?.classList.toggle(Diff2HtmlCssClasses.Div__DiffFileContent__Collapsed, collapse);
   }
 
   private async getDiffHash(diffElement: HTMLElement): Promise<string | null> {
