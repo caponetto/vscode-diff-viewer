@@ -6,6 +6,7 @@ export interface UpdateWebviewPayload {
   config: AppConfig;
   diffFiles: DiffFile[];
   viewedState: ViewedState;
+  collapseAll: boolean;
 }
 
 export interface MessageToWebviewApi {

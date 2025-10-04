@@ -50,6 +50,10 @@
         "command": "diffviewer.showSideBySide",
         "title": "Show diff side by side",
         "icon": "$(files)"
+      },
+      {
+        "command": "diffviewer.openCollapsed",
+        "title": "Open diff collapsed (all viewed)"
       }
     ],
     "customEditors": [
@@ -142,6 +146,13 @@
       }
     ],
     "menus": {
+      "explorer/context": [
+        {
+          "command": "diffviewer.openCollapsed",
+          "group": "navigation@99",
+          "when": "resourceLangId == 'diff'"
+        }
+      ],
       "editor/title": [
         {
           "command": "diffviewer.showLineByLine",
