@@ -1,24 +1,18 @@
 import { basename, join } from "path";
 import * as vscode from "vscode";
-import { MessageToExtension, MessageToExtensionHandler, MessageToWebview } from "../../shared/message";
+import { MessageToExtensionHandler, MessageToWebview } from "../../shared/message";
+import { GenericMessageHandlerImpl } from "../../shared/message-handler";
 import { ViewedStateStore } from "../viewed-state";
 
-export class MessageToExtensionHandlerImpl implements MessageToExtensionHandler {
+export class MessageToExtensionHandlerImpl extends GenericMessageHandlerImpl implements MessageToExtensionHandler {
   constructor(
     private readonly args: {
       diffDocument: vscode.TextDocument;
       viewedStateStore: ViewedStateStore;
       postMessageToWebviewFn: (message: MessageToWebview) => void;
     },
-  ) {}
-
-  public onMessageReceived(message: MessageToExtension): void {
-    if ("payload" in message) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this[message.kind](message.payload as any);
-    } else {
-      this[message.kind]();
-    }
+  ) {
+    super();
   }
 
   public pong(): void {

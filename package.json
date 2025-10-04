@@ -166,6 +166,8 @@
     "run:webmode": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --version=stable",
     "jest:run": "jest --silent",
     "test": "npm run jest:run",
+    "test:coverage": "jest --coverage --silent",
+    "test:coverage:ci": "jest --coverage --ci --silent",
     "prepare": "husky install"
   },
   "dependencies": {

@@ -33,8 +33,15 @@ jobs:
       - name: "Build and Pack"
         run: npm run build:prod && npm run pack:extension
 
-      - name: "Test"
-        run: npm run test
+      - name: "Test with Coverage"
+        run: npm run test:coverage:ci
+
+      - name: "Upload Coverage Report"
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ matrix.os }}
+          path: coverage/
+          retention-days: 30
 
       - name: "Upload vsix (Ubuntu only)"
         if: matrix.os == 'ubuntu-latest'

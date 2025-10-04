@@ -4,7 +4,8 @@ import { AppConfig } from "../../extension/configuration";
 import { ViewedState } from "../../extension/viewed-state";
 import { CssPropertiesBasedOnTheme, SkeletonElementIds } from "../../shared/css/elements";
 import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
-import { MessageToExtension, MessageToWebview, MessageToWebviewHandler } from "../../shared/message";
+import { MessageToExtension, MessageToWebviewHandler } from "../../shared/message";
+import { GenericMessageHandlerImpl } from "../../shared/message-handler";
 import { AppTheme } from "../../shared/types";
 import { Diff2HtmlCssClassElements } from "../css/elements";
 import { UpdateWebviewPayload } from "./api";
@@ -13,17 +14,11 @@ import { getSha1Hash } from "./hash";
 const CHANGED_SINCE_VIEWED = "changed-since-last-view";
 const SELECTED = "selected";
 
-export class MessageToWebviewHandlerImpl implements MessageToWebviewHandler {
+export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl implements MessageToWebviewHandler {
   private currentConfig: AppConfig | undefined = undefined;
 
-  constructor(private readonly postMessageToExtensionFn: (message: MessageToExtension) => void) {}
-
-  public onMessageReceived(message: MessageToWebview): void {
-    if ("payload" in message) {
-      this[message.kind](message.payload);
-    } else {
-      this[message.kind]();
-    }
+  constructor(private readonly postMessageToExtensionFn: (message: MessageToExtension) => void) {
+    super();
   }
 
   public prepare(): void {
