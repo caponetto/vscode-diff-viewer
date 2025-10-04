@@ -7,7 +7,6 @@ import { MessageToExtensionHandlerImpl } from "../message/handler";
 import { ViewedStateStore } from "../viewed-state";
 import { buildSkeleton } from "../skeleton";
 import { extractConfig, setOutputFormatConfig } from "../configuration";
-import { SkeletonElementIds } from "../../shared/css/elements";
 import { MessageToWebview } from "../../shared/message";
 
 // Mock dependencies
@@ -188,7 +187,7 @@ describe("DiffViewerProvider", () => {
         webviewPath: mockWebviewPath,
       });
 
-      expect(disposables).toHaveLength(3);
+      expect(disposables).toHaveLength(4);
       expect(mockRegisterCustomEditorProvider).toHaveBeenCalledWith("diffViewer", expect.any(DiffViewerProvider), {
         webviewOptions: {
           retainContextWhenHidden: true,
@@ -198,6 +197,7 @@ describe("DiffViewerProvider", () => {
       });
       expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showLineByLine", expect.any(Function));
       expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showSideBySide", expect.any(Function));
+      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.openCollapsed", expect.any(Function));
     });
 
     it("should call setOutputFormatConfig when commands are executed", () => {
@@ -307,7 +307,7 @@ describe("DiffViewerProvider", () => {
           config: expect.any(Object),
           diffFiles: expect.any(Array),
           viewedState: expect.any(Object),
-          diffContainer: SkeletonElementIds.DiffContainer,
+          collapseAll: false,
         },
       });
     });
@@ -452,7 +452,6 @@ describe("DiffViewerProvider", () => {
           config: expect.any(Object),
           diffFiles: expect.any(Array),
           viewedState: expect.any(Object),
-          diffContainer: SkeletonElementIds.DiffContainer,
         }),
       });
     });
