@@ -217,6 +217,23 @@ describe("DiffViewerProvider", () => {
 
       expect(mockSetOutputFormatConfig).toHaveBeenCalledWith(expectedConfig);
     });
+
+    it("should open a diff with all files collapsed", () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      // Get the command function
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] == `diffviewer.openCollapsed`)[1];
+
+      (vscode.Uri.file as jest.Mock).mockReturnValueOnce({ with: jest.fn().mockReturnValue("uri-with-selected") });
+
+      // Execute commands
+      command(vscode.Uri.file("foo.patch"));
+
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.openWith", "uri-with-selected", "diffViewer");
+    });
   });
 
   describe("resolveCustomTextEditor", () => {
