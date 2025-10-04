@@ -123,6 +123,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
 
     for (const toggle of Array.from(allToggles)) {
       this.updateDiff2HtmlFileCollapsed(toggle, viewed);
+      toggle.classList.remove(CHANGED_SINCE_VIEWED);
       // no await here so we synchronously return from this function, the sending will happen later as hashes get computed
       this.sendFileViewedMessage(toggle, viewed);
     }
