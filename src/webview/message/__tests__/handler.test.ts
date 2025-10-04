@@ -381,8 +381,8 @@ describe("MessageToWebviewHandlerImpl", () => {
       const mockClosest = () => ({ querySelector: () => ({ classList: { toggle: jest.fn() } }) });
 
       const mockToggles = [
-        { checked: false, closest: mockClosest },
-        { checked: false, closest: mockClosest },
+        { checked: false, closest: mockClosest, classList: { remove: jest.fn() } },
+        { checked: false, closest: mockClosest, classList: { remove: jest.fn() } },
       ];
 
       mockGetElementById.mockReturnValue(mockMarkAllCheckbox);
