@@ -7,7 +7,6 @@ import { MessageToExtensionHandlerImpl } from "../message/handler";
 import { ViewedStateStore } from "../viewed-state";
 import { buildSkeleton } from "../skeleton";
 import { extractConfig, setOutputFormatConfig } from "../configuration";
-import { SkeletonElementIds } from "../../shared/css/elements";
 import { MessageToWebview } from "../../shared/message";
 
 // Mock dependencies
@@ -188,7 +187,7 @@ describe("DiffViewerProvider", () => {
         webviewPath: mockWebviewPath,
       });
 
-      expect(disposables).toHaveLength(3);
+      expect(disposables).toHaveLength(4);
       expect(mockRegisterCustomEditorProvider).toHaveBeenCalledWith("diffViewer", expect.any(DiffViewerProvider), {
         webviewOptions: {
           retainContextWhenHidden: true,
@@ -198,24 +197,42 @@ describe("DiffViewerProvider", () => {
       });
       expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showLineByLine", expect.any(Function));
       expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showSideBySide", expect.any(Function));
+      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.openCollapsed", expect.any(Function));
     });
 
-    it("should call setOutputFormatConfig when commands are executed", () => {
+    it.each([
+      ["showSideBySide", "side-by-side"],
+      ["showLineByLine", "line-by-line"],
+    ])("should call setOutputFormatConfig when commands are executed", (cmd, expectedConfig) => {
       DiffViewerProvider.registerContributions({
         extensionContext: mockExtensionContext,
         webviewPath: mockWebviewPath,
       });
 
-      // Get the command functions
-      const lineByLineCommand = mockRegisterCommand.mock.calls[0][1];
-      const sideBySideCommand = mockRegisterCommand.mock.calls[1][1];
+      // Get the command function
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] == `diffviewer.${cmd}`)[1];
 
       // Execute commands
-      lineByLineCommand();
-      sideBySideCommand();
+      command();
 
-      expect(mockSetOutputFormatConfig).toHaveBeenCalledWith("line-by-line");
-      expect(mockSetOutputFormatConfig).toHaveBeenCalledWith("side-by-side");
+      expect(mockSetOutputFormatConfig).toHaveBeenCalledWith(expectedConfig);
+    });
+
+    it("should open a diff with all files collapsed", () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      // Get the command function
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] == `diffviewer.openCollapsed`)[1];
+
+      (vscode.Uri.file as jest.Mock).mockReturnValueOnce({ with: jest.fn().mockReturnValue("uri-with-selected") });
+
+      // Execute commands
+      command(vscode.Uri.file("foo.patch"));
+
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.openWith", "uri-with-selected", "diffViewer");
     });
   });
 
@@ -307,7 +324,7 @@ describe("DiffViewerProvider", () => {
           config: expect.any(Object),
           diffFiles: expect.any(Array),
           viewedState: expect.any(Object),
-          diffContainer: SkeletonElementIds.DiffContainer,
+          collapseAll: false,
         },
       });
     });
@@ -452,7 +469,6 @@ describe("DiffViewerProvider", () => {
           config: expect.any(Object),
           diffFiles: expect.any(Array),
           viewedState: expect.any(Object),
-          diffContainer: SkeletonElementIds.DiffContainer,
         }),
       });
     });

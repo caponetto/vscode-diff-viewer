@@ -2,7 +2,6 @@ import { parse } from "diff2html";
 import { ColorSchemeType } from "diff2html/lib/types";
 import { basename } from "path";
 import * as vscode from "vscode";
-import { SkeletonElementIds } from "../shared/css/elements";
 import { MessageToExtensionHandler, MessageToWebview } from "../shared/message";
 import { APP_CONFIG_SECTION, AppConfig, extractConfig, setOutputFormatConfig } from "./configuration";
 import { MessageToExtensionHandlerImpl } from "./message/handler";
@@ -44,6 +43,10 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       }),
       vscode.commands.registerCommand("diffviewer.showLineByLine", () => setOutputFormatConfig("line-by-line")),
       vscode.commands.registerCommand("diffviewer.showSideBySide", () => setOutputFormatConfig("side-by-side")),
+      vscode.commands.registerCommand("diffviewer.openCollapsed", async (file) => {
+        const collapsedUri = file.with({ query: "collapsed" });
+        await vscode.commands.executeCommand("vscode.openWith", collapsedUri, "diffViewer");
+      }),
     ];
   }
 
@@ -72,6 +75,8 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       docId: diffDocument.uri.fsPath,
     });
 
+    const collapseAll = new URLSearchParams(diffDocument.uri.query).has("collapsed");
+
     const messageReceivedHandler = new MessageToExtensionHandlerImpl({
       diffDocument,
       viewedStateStore,
@@ -83,7 +88,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     const webviewContext: WebviewContext = { document: diffDocument, panel: webviewPanel, viewedStateStore };
 
     this.registerEventHandlers({ webviewContext, messageHandler: messageReceivedHandler });
-    this.updateWebview(webviewContext);
+    this.updateWebview(webviewContext, collapseAll);
   }
 
   private registerEventHandlers(args: { webviewContext: WebviewContext; messageHandler: MessageToExtensionHandler }) {
@@ -113,7 +118,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     args.webviewContext.panel.onDidDispose(() => disposables.dispose());
   }
 
-  private updateWebview(webviewContext: WebviewContext): void {
+  private updateWebview(webviewContext: WebviewContext, collapseAll = false): void {
     this.postMessageToWebviewWrapper({
       webview: webviewContext.panel.webview,
       message: {
@@ -154,7 +159,7 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
             config: config,
             diffFiles: diffFiles,
             viewedState: viewedState,
-            diffContainer: SkeletonElementIds.DiffContainer,
+            collapseAll,
           },
         },
       });

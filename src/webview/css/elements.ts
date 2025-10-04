@@ -5,6 +5,7 @@ export enum Diff2HtmlCssClassElements {
   Div__File = ".d2h-file-wrapper",
   Div__LeftDiffOnSideBySide__FirstChild = ".d2h-file-side-diff:first-child",
   Div__LineNumberRightOnLineByLine = ".line-num2",
+  Label__ViewedToggle = ".d2h-file-collapse",
   Input__ViewedToggle = ".d2h-file-collapse-input",
   Input__ViewedToggle__Checked = ".d2h-file-collapse-input:checked",
   Td__DeletedLine = ".d2h-del",

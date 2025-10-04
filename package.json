@@ -50,6 +50,10 @@
         "command": "diffviewer.showSideBySide",
         "title": "Show diff side by side",
         "icon": "$(files)"
+      },
+      {
+        "command": "diffviewer.openCollapsed",
+        "title": "Open diff collapsed (all viewed)"
       }
     ],
     "customEditors": [
@@ -142,6 +146,13 @@
       }
     ],
     "menus": {
+      "explorer/context": [
+        {
+          "command": "diffviewer.openCollapsed",
+          "group": "navigation@99",
+          "when": "resourceLangId == 'diff'"
+        }
+      ],
       "editor/title": [
         {
           "command": "diffviewer.showLineByLine",
@@ -165,7 +176,7 @@
     "pack:extension": "vsce package -o ./dist/vscode_diff_viewer_v$npm_package_version.vsix --githubBranch main",
     "run:webmode": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --version=stable",
     "jest:run": "jest --silent",
-    "test": "npm run jest:run",
+    "test": "npm run jest:run --",
     "test:coverage": "jest --coverage --silent",
     "test:coverage:ci": "jest --coverage --ci --silent",
     "prepare": "husky install"

@@ -203,6 +203,7 @@ describe("MessageToWebviewHandlerImpl", () => {
       mockDiffContainer = {
         querySelectorAll: mockQuerySelectorAll,
         addEventListener: mockAddEventListener,
+        style: {},
       } as unknown as HTMLElement;
 
       mockDiffFiles = [createMockDiffFile("file1.ts"), createMockDiffFile("file2.ts")];
@@ -216,8 +217,8 @@ describe("MessageToWebviewHandlerImpl", () => {
       await handler.updateWebview({
         config: mockConfig,
         diffFiles: mockDiffFiles,
-        diffContainer: "test-container",
         viewedState: mockViewedState,
+        collapseAll: false,
       });
 
       expect(Diff2HtmlUI).not.toHaveBeenCalled();
@@ -227,12 +228,13 @@ describe("MessageToWebviewHandlerImpl", () => {
       const mockDiffContainer = {
         querySelectorAll: mockQuerySelectorAll,
         addEventListener: mockAddEventListener,
+        style: {},
       } as unknown as HTMLElement;
 
       // Reset the mock to use the global implementation
       mockGetElementById.mockReset();
       mockGetElementById.mockImplementation((id: string) => {
-        if (id === "test-container") {
+        if (id === "diff-container") {
           return mockDiffContainer;
         }
         if (id === "mark-all-viewed-checkbox") {
@@ -259,8 +261,8 @@ describe("MessageToWebviewHandlerImpl", () => {
       await handler.updateWebview({
         config: mockConfig,
         diffFiles: [],
-        diffContainer: "test-container",
         viewedState: mockViewedState,
+        collapseAll: false,
       });
 
       expect(mockGetElementById).toHaveBeenCalledWith("empty-message-container");
@@ -278,7 +280,7 @@ describe("MessageToWebviewHandlerImpl", () => {
       // Reset the mock to use the global implementation
       mockGetElementById.mockReset();
       mockGetElementById.mockImplementation((id: string) => {
-        if (id === "test-container") {
+        if (id === "diff-container") {
           return mockDiffContainer;
         }
         if (id === "mark-all-viewed-checkbox") {
@@ -306,14 +308,74 @@ describe("MessageToWebviewHandlerImpl", () => {
         getPropertyValue: jest.fn().mockReturnValue("test-value"),
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const setAllViewedStates = ((handler as any).setAllViewedStates = jest.fn());
+
       await handler.updateWebview({
         config: mockConfig,
         diffFiles: mockDiffFiles,
-        diffContainer: "test-container",
         viewedState: mockViewedState,
+        collapseAll: false,
       });
 
       expect(Diff2HtmlUI).toHaveBeenCalledWith(mockDiffContainer, mockDiffFiles, mockConfig.diff2html);
+      expect(setAllViewedStates).not.toHaveBeenCalled();
+    });
+
+    it("should collapse all files if called with collapseAll", async () => {
+      const mockRoot = {
+        style: { setProperty: jest.fn() },
+      };
+      Object.defineProperty(global.document, "documentElement", {
+        value: mockRoot,
+        writable: true,
+      });
+
+      // Reset the mock to use the global implementation
+      mockGetElementById.mockReset();
+      mockGetElementById.mockImplementation((id: string) => {
+        if (id === "diff-container") {
+          return mockDiffContainer;
+        }
+        if (id === "mark-all-viewed-checkbox") {
+          return { addEventListener: mockAddEventListener };
+        }
+        if (id === "loading-container") {
+          return { style: { display: "none" } };
+        }
+        if (id === "empty-message-container") {
+          return { style: { display: "none" } };
+        }
+        if (id === "viewed-indicator") {
+          return { textContent: "" };
+        }
+        if (id === "viewed-progress") {
+          return { style: { width: "" } };
+        }
+        if (id === "mark-all-viewed-container") {
+          return { classList: { add: jest.fn(), remove: jest.fn() } };
+        }
+        return { style: { display: "none" } };
+      });
+
+      mockGetComputedStyle.mockReturnValue({
+        getPropertyValue: jest.fn().mockReturnValue("test-value"),
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const setAllViewedStates = ((handler as any).setAllViewedStates = jest.fn());
+
+      await handler.updateWebview({
+        config: mockConfig,
+        diffFiles: mockDiffFiles,
+        viewedState: mockViewedState,
+        collapseAll: true,
+      });
+
+      expect(Diff2HtmlUI).toHaveBeenCalledWith(mockDiffContainer, mockDiffFiles, mockConfig.diff2html);
+
+      expect(setAllViewedStates).toHaveBeenCalledTimes(1);
+      expect(setAllViewedStates).toHaveBeenCalledWith(true);
     });
   });
 
@@ -376,22 +438,28 @@ describe("MessageToWebviewHandlerImpl", () => {
         addEventListener: mockAddEventListener,
       } as unknown as HTMLInputElement;
 
+      const mockClosest = () => ({ querySelector: () => ({ classList: { toggle: jest.fn() } }) });
+
       const mockToggles = [
-        { checked: false, click: mockClick },
-        { checked: false, click: mockClick },
+        { checked: false, closest: mockClosest, classList: { remove: jest.fn() } },
+        { checked: false, closest: mockClosest, classList: { remove: jest.fn() } },
       ];
 
       mockGetElementById.mockReturnValue(mockMarkAllCheckbox);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (handler as any).getViewedToggles = jest.fn().mockReturnValue(mockToggles);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (handler as any).updateFooter = jest.fn();
 
       const mockEvent = { target: mockMarkAllCheckbox } as unknown as Event;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (handler as any).onMarkAllViewedChangedHandler(mockEvent);
 
-      expect(mockToggles[0].click).toHaveBeenCalled();
-      expect(mockToggles[1].click).toHaveBeenCalled();
+      expect(mockToggles[0].checked).toBe(true);
+      expect(mockToggles[1].checked).toBe(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((handler as any).updateFooter).toHaveBeenCalled();
     });
   });
 
@@ -560,6 +628,7 @@ describe("MessageToWebviewHandlerImpl", () => {
         click: mockClick,
         classList: { add: jest.fn() },
         closest: mockClosest,
+        checked: false, // this will be set to true if the toggle is switched
       };
 
       const mockFileContainer = {
@@ -568,10 +637,11 @@ describe("MessageToWebviewHandlerImpl", () => {
 
       const mockDiffContainer = {
         querySelectorAll: jest.fn().mockReturnValue([mockToggle]),
+        style: {},
       } as unknown as HTMLElement;
 
       mockClosest.mockReturnValue(mockFileContainer);
-      mockQuerySelector.mockReturnValue({ textContent: "file1.ts" });
+      mockQuerySelector.mockReturnValue({ textContent: "file1.ts", classList: { toggle: jest.fn() } });
       (getSha1Hash as jest.Mock).mockResolvedValue("hash1");
 
       // Mock the getDiffElementFileName method to return the correct file name
@@ -585,7 +655,7 @@ describe("MessageToWebviewHandlerImpl", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (handler as any).hideViewedFiles(mockDiffContainer, mockViewedState);
 
-      expect(mockToggle.click).toHaveBeenCalled();
+      expect(mockToggle.checked).toBe(true);
     });
 
     it("should mark files as changed since viewed", async () => {
@@ -601,10 +671,14 @@ describe("MessageToWebviewHandlerImpl", () => {
 
       const mockDiffContainer = {
         querySelectorAll: jest.fn().mockReturnValue([mockToggle]),
+        style: {},
       } as unknown as HTMLElement;
 
       mockClosest.mockReturnValue(mockFileContainer);
-      mockQuerySelector.mockReturnValue({ textContent: "file1.ts" });
+      mockQuerySelector.mockReturnValue({
+        textContent: "file1.ts",
+        classList: { toggle: jest.fn() },
+      });
       (getSha1Hash as jest.Mock).mockResolvedValue("different-hash");
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -639,7 +713,7 @@ describe("MessageToWebviewHandlerImpl", () => {
       (handler as any).getDiffHash = jest.fn().mockResolvedValue("test-hash");
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (handler as any).sendFileViewedMessage(mockToggle as unknown as HTMLInputElement);
+      await (handler as any).sendFileViewedMessage(mockToggle as unknown as HTMLInputElement, true);
 
       expect(mockPostMessageToExtensionFn).toHaveBeenCalledWith({
         kind: "toggleFileViewed",
@@ -785,6 +859,7 @@ describe("MessageToWebviewHandlerImpl", () => {
       const mockDiffContainer = {
         querySelectorAll: mockQuerySelectorAll,
         addEventListener: mockAddEventListener,
+        style: {},
       } as unknown as HTMLElement;
 
       const mockViewedToggles = [
@@ -810,8 +885,8 @@ describe("MessageToWebviewHandlerImpl", () => {
       await handler.updateWebview({
         config: mockConfig,
         diffFiles: [createMockDiffFile("test.ts")],
-        diffContainer: "test-container",
         viewedState: mockViewedState,
+        collapseAll: false,
       });
 
       expect(Diff2HtmlUI).toHaveBeenCalled();
