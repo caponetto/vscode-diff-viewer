@@ -308,6 +308,9 @@ describe("MessageToWebviewHandlerImpl", () => {
         getPropertyValue: jest.fn().mockReturnValue("test-value"),
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const setAllViewedStates = ((handler as any).setAllViewedStates = jest.fn());
+
       await handler.updateWebview({
         config: mockConfig,
         diffFiles: mockDiffFiles,
@@ -316,6 +319,63 @@ describe("MessageToWebviewHandlerImpl", () => {
       });
 
       expect(Diff2HtmlUI).toHaveBeenCalledWith(mockDiffContainer, mockDiffFiles, mockConfig.diff2html);
+      expect(setAllViewedStates).not.toHaveBeenCalled();
+    });
+
+    it("should collapse all files if called with collapseAll", async () => {
+      const mockRoot = {
+        style: { setProperty: jest.fn() },
+      };
+      Object.defineProperty(global.document, "documentElement", {
+        value: mockRoot,
+        writable: true,
+      });
+
+      // Reset the mock to use the global implementation
+      mockGetElementById.mockReset();
+      mockGetElementById.mockImplementation((id: string) => {
+        if (id === "diff-container") {
+          return mockDiffContainer;
+        }
+        if (id === "mark-all-viewed-checkbox") {
+          return { addEventListener: mockAddEventListener };
+        }
+        if (id === "loading-container") {
+          return { style: { display: "none" } };
+        }
+        if (id === "empty-message-container") {
+          return { style: { display: "none" } };
+        }
+        if (id === "viewed-indicator") {
+          return { textContent: "" };
+        }
+        if (id === "viewed-progress") {
+          return { style: { width: "" } };
+        }
+        if (id === "mark-all-viewed-container") {
+          return { classList: { add: jest.fn(), remove: jest.fn() } };
+        }
+        return { style: { display: "none" } };
+      });
+
+      mockGetComputedStyle.mockReturnValue({
+        getPropertyValue: jest.fn().mockReturnValue("test-value"),
+      });
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const setAllViewedStates = ((handler as any).setAllViewedStates = jest.fn());
+
+      await handler.updateWebview({
+        config: mockConfig,
+        diffFiles: mockDiffFiles,
+        viewedState: mockViewedState,
+        collapseAll: true,
+      });
+
+      expect(Diff2HtmlUI).toHaveBeenCalledWith(mockDiffContainer, mockDiffFiles, mockConfig.diff2html);
+
+      expect(setAllViewedStates).toHaveBeenCalledTimes(1);
+      expect(setAllViewedStates).toHaveBeenCalledWith(true);
     });
   });
 
