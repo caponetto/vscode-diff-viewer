@@ -200,22 +200,22 @@ describe("DiffViewerProvider", () => {
       expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.openCollapsed", expect.any(Function));
     });
 
-    it("should call setOutputFormatConfig when commands are executed", () => {
+    it.each([
+      ["showSideBySide", "side-by-side"],
+      ["showLineByLine", "line-by-line"],
+    ])("should call setOutputFormatConfig when commands are executed", (cmd, expectedConfig) => {
       DiffViewerProvider.registerContributions({
         extensionContext: mockExtensionContext,
         webviewPath: mockWebviewPath,
       });
 
-      // Get the command functions
-      const lineByLineCommand = mockRegisterCommand.mock.calls[0][1];
-      const sideBySideCommand = mockRegisterCommand.mock.calls[1][1];
+      // Get the command function
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] == `diffviewer.${cmd}`)[1];
 
       // Execute commands
-      lineByLineCommand();
-      sideBySideCommand();
+      command();
 
-      expect(mockSetOutputFormatConfig).toHaveBeenCalledWith("line-by-line");
-      expect(mockSetOutputFormatConfig).toHaveBeenCalledWith("side-by-side");
+      expect(mockSetOutputFormatConfig).toHaveBeenCalledWith(expectedConfig);
     });
   });
 
