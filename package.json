@@ -171,7 +171,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
-    "diff2html": "^3.4.51"
+    "diff2html": "^3.4.56"
   },
   "devDependencies": {
     "@jest/types": "^29.6.3",
