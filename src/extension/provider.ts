@@ -44,8 +44,10 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       vscode.commands.registerCommand("diffviewer.showLineByLine", () => setOutputFormatConfig("line-by-line")),
       vscode.commands.registerCommand("diffviewer.showSideBySide", () => setOutputFormatConfig("side-by-side")),
       vscode.commands.registerCommand("diffviewer.openCollapsed", async (file) => {
-        const collapsedUri = file.with({ query: "collapsed" });
-        await vscode.commands.executeCommand("vscode.openWith", collapsedUri, "diffViewer");
+        if (file) {
+          const collapsedUri = file.with({ query: "collapsed" });
+          await vscode.commands.executeCommand("vscode.openWith", collapsedUri, "diffViewer");
+        }
       }),
     ];
   }

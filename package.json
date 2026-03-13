@@ -146,6 +146,12 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "diffviewer.openCollapsed",
+          "when": "false"
+        }
+      ],
       "explorer/context": [
         {
           "command": "diffviewer.openCollapsed",
