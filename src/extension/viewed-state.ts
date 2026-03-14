@@ -34,7 +34,9 @@ export class ViewedStateStore {
     if (!this.args.docId) {
       this.transientViewedState = viewedState;
     } else {
-      this.args.context.workspaceState.update(this.args.docId, viewedState);
+      // remove the state if no files are marked as viewed
+      const stateToSave = Object.keys(viewedState).length === 0 ? undefined : viewedState;
+      this.args.context.workspaceState.update(this.args.docId, stateToSave);
     }
   }
 }

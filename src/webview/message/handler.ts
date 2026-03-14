@@ -7,6 +7,7 @@ import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../s
 import { MessageToExtension, MessageToWebviewHandler } from "../../shared/message";
 import { GenericMessageHandlerImpl } from "../../shared/message-handler";
 import { AppTheme } from "../../shared/types";
+import { Diff2HtmlCssClasses } from "../css/classes";
 import { Diff2HtmlCssClassElements } from "../css/elements";
 import { UpdateWebviewPayload } from "./api";
 import { getSha1Hash } from "./hash";
@@ -31,7 +32,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
   }
 
   public async updateWebview(payload: UpdateWebviewPayload): Promise<void> {
-    const diffContainer = document.getElementById(payload.diffContainer);
+    const diffContainer = document.getElementById(SkeletonElementIds.DiffContainer);
     if (!diffContainer) {
       return;
     }
@@ -46,13 +47,25 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       const appTheme = this.currentConfig.diff2html.colorScheme === ColorSchemeType.DARK ? "dark" : "light";
       this.setupTheme(appTheme);
 
+      // hide the diff container for now so the full diff doesn't show
+      if (payload.collapseAll) {
+        diffContainer.style.display = "none";
+      }
+
       const diff2html = new Diff2HtmlUI(diffContainer, payload.diffFiles, this.currentConfig.diff2html);
       diff2html.draw();
 
       this.registerViewedToggleHandlers(diffContainer);
       this.registerDiffContainerHandlers(diffContainer);
-      await this.hideViewedFiles(diffContainer, payload.viewedState);
+      if (payload.collapseAll) {
+        this.setAllViewedStates(true);
+      } else {
+        await this.hideViewedFiles(diffContainer, payload.viewedState);
+      }
       this.updateFooter();
+
+      // show the diff
+      diffContainer.style.display = "block";
     });
   }
 
@@ -91,7 +104,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     viewedToggle.classList.remove(CHANGED_SINCE_VIEWED);
     this.scrollDiffFileHeaderIntoView(viewedToggle);
     this.updateFooter();
-    this.sendFileViewedMessage(viewedToggle);
+    this.sendFileViewedMessage(viewedToggle, viewedToggle.checked);
   }
 
   private onMarkAllViewedChangedHandler(event: Event): void {
@@ -101,12 +114,18 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     }
 
     const isChecked = markAllViewedCheckbox.checked;
+    this.setAllViewedStates(isChecked);
+    this.updateFooter();
+  }
+
+  private setAllViewedStates(viewed: boolean) {
     const allToggles = this.getViewedToggles();
 
     for (const toggle of Array.from(allToggles)) {
-      if (toggle.checked !== isChecked) {
-        toggle.click();
-      }
+      this.updateDiff2HtmlFileCollapsed(toggle, viewed);
+      toggle.classList.remove(CHANGED_SINCE_VIEWED);
+      // no await here so we synchronously return from this function, the sending will happen later as hashes get computed
+      void this.sendFileViewedMessage(toggle, viewed);
     }
   }
 
@@ -265,17 +284,35 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     const viewedToggles = diffContainer.querySelectorAll<HTMLInputElement>(
       Diff2HtmlCssClassElements.Input__ViewedToggle,
     );
+
+    // first synchronously hide all viewed files so we don't render too much in case the file is huge and most is collapsed
+    // we'll do a second pass over hidden files, so we'll hold them in togglesToRevisit
+    const togglesToRevisit = [];
     for (const toggle of Array.from(viewedToggles)) {
       const fileName = this.getDiffElementFileName(toggle);
       if (fileName && viewedState[fileName]) {
-        const diffHash = await this.getDiffHash(toggle);
-        if (diffHash === viewedState[fileName]) {
-          toggle.click();
-        } else {
-          toggle.classList.add(CHANGED_SINCE_VIEWED);
-        }
+        togglesToRevisit.push({ toggle, oldSha1: viewedState[fileName] });
+        this.updateDiff2HtmlFileCollapsed(toggle, true);
       }
     }
+
+    for (const { toggle, oldSha1 } of togglesToRevisit) {
+      const diffHash = await this.getDiffHash(toggle);
+      if (diffHash !== oldSha1) {
+        this.updateDiff2HtmlFileCollapsed(toggle, false);
+        toggle.classList.add(CHANGED_SINCE_VIEWED);
+      }
+    }
+  }
+
+  private updateDiff2HtmlFileCollapsed(toggleElement: HTMLInputElement, collapse: boolean) {
+    // do the same thing that diff2html does to collapse or expand one file
+    toggleElement.checked = collapse;
+    const fileContainer = this.getDiffFileContainer(toggleElement);
+    const label = fileContainer?.querySelector(Diff2HtmlCssClassElements.Label__ViewedToggle);
+    label?.classList.toggle(Diff2HtmlCssClasses.Input__ViewedToggle__Selected, collapse);
+    const fileContent = fileContainer?.querySelector(Diff2HtmlCssClassElements.Div__DiffFileContent);
+    fileContent?.classList.toggle(Diff2HtmlCssClasses.Div__DiffFileContent__Collapsed, collapse);
   }
 
   private async getDiffHash(diffElement: HTMLElement): Promise<string | null> {
@@ -284,13 +321,13 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     return fileContent ? getSha1Hash(fileContent) : null;
   }
 
-  private async sendFileViewedMessage(toggleElement: HTMLInputElement): Promise<void> {
-    const fileName = this.getDiffElementFileName(toggleElement);
+  private async sendFileViewedMessage(diffElement: HTMLInputElement, viewed: boolean): Promise<void> {
+    const fileName = this.getDiffElementFileName(diffElement);
     if (!fileName) {
       return;
     }
 
-    const viewedSha1 = toggleElement.checked ? await this.getDiffHash(toggleElement) : null;
+    const viewedSha1 = viewed ? await this.getDiffHash(diffElement) : null;
 
     this.postMessageToExtensionFn({
       kind: "toggleFileViewed",
@@ -310,21 +347,21 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     this.showLoading(false);
   }
 
-  private showLoading(isVisible: boolean): void {
+  private showLoading(isLoading: boolean): void {
     const loadingContainer = document.getElementById(SkeletonElementIds.LoadingContainer);
     if (!loadingContainer) {
       return;
     }
 
-    loadingContainer.style.display = isVisible ? "block" : "none";
+    loadingContainer.style.display = isLoading ? "block" : "none";
   }
 
-  private showEmpty(isVisible: boolean): void {
+  private showEmpty(isEmpty: boolean): void {
     const emptyMessageContainer = document.getElementById(SkeletonElementIds.EmptyMessageContainer);
     if (!emptyMessageContainer) {
       return;
     }
 
-    emptyMessageContainer.style.display = isVisible ? "block" : "none";
+    emptyMessageContainer.style.display = isEmpty ? "block" : "none";
   }
 }
