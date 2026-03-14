@@ -1,3 +1,9 @@
+# 1.7.0
+
+- Add command to open diffs in collapsed mode
+- Add coverage reporting and tests for extension functionality
+- Bump several dependencies
+
 # 1.6.0
 
 - Bump several dependencies
