@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src {{CSP_SOURCE}} https: data:; style-src {{CSP_SOURCE}} 'unsafe-inline'; script-src 'nonce-{{NONCE}}';"
+    />
+    {{COMMON_CSS_LINKS}}
+    <link id="highlight-light-stylesheet" rel="stylesheet" href="{{LIGHT_HIGHLIGHT_CSS_URI}}" />
+    <link id="highlight-dark-stylesheet" rel="stylesheet" href="{{DARK_HIGHLIGHT_CSS_URI}}" disabled />
+  </head>
+  <body>
+    <div id="loading-container">
+      <span>Loading...</span>
+    </div>
+    <div id="empty-message-container" style="display: none">
+      <span>Empty diff file</span>
+    </div>
+    <div id="large-diff-notice-container" style="display: none"></div>
+    <div id="diff-container"></div>
+    <footer>
+      <span id="viewed-indicator" aria-live="polite"></span>
+      <progress id="viewed-progress-container" aria-label="Viewed files progress" max="100" value="0"></progress>
+    </footer>
+    <script nonce="{{NONCE}}" src="{{WEBVIEW_URI}}"></script>
+  </body>
+</html>

@@ -116,3 +116,24 @@ export function isMessageKind<T extends { kind: string }>(
 ): message is Extract<T, { kind: typeof kind }> {
   return message.kind === kind;
 }
+
+export function isMessageToExtension(message: unknown): message is MessageToExtension {
+  return isMessageKindRecord(message, ["pong", "openFile", "toggleFileViewed", "requestWebviewAction"]);
+}
+
+export function isMessageToWebview(message: unknown): message is MessageToWebview {
+  return isMessageKindRecord(message, ["ping", "prepare", "updateWebview", "performWebviewAction"]);
+}
+
+function isMessageKindRecord<TKinds extends string>(
+  message: unknown,
+  allowedKinds: readonly TKinds[],
+): message is { kind: TKinds; payload?: unknown } {
+  return (
+    typeof message === "object" &&
+    message !== null &&
+    "kind" in message &&
+    typeof message.kind === "string" &&
+    allowedKinds.includes(message.kind as TKinds)
+  );
+}

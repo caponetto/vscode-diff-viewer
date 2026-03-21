@@ -4,34 +4,36 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
 
     steps:
-      - name: "Get release"
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.BASIC_TOKEN }}
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ steps.get_release.outputs.tag_name }}
+          ref: ${{ github.event.release.tag_name }}
 
       - name: "Setup environment"
         uses: ./.github/actions/setup-env
+
+      - name: "Validate release tag"
+        shell: bash
+        run: |
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          PACKAGE_VERSION="$(node -e "console.log(require('./package.json').version)")"
+          [ "$RELEASE_TAG" = "v$PACKAGE_VERSION" ]
 
       - name: "Build and Pack"
         run: npm run build:prod && npm run pack:extension
 
       - name: "Publish :: VS Code Marketplace"
         run: |
-          npm install -g @vscode/vsce
-          vsce publish -p ${{ secrets.VSCODE_MP_TOKEN }} --packagePath ./dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
+          npx @vscode/vsce@3.2.2 publish -p ${{ secrets.VSCODE_MP_TOKEN }} --packagePath ./dist/vscode_diff_viewer_${{ github.event.release.tag_name }}.vsix
 
       - name: "Publish :: Open VSX Registry"
         run: |
-          npm install -g ovsx
-          ovsx publish -p ${{ secrets.OPEN_VSX_TOKEN }} ./dist/vscode_diff_viewer_${{ steps.get_release.outputs.tag_name }}.vsix
+          npx --yes ovsx@0.10.5 publish -p ${{ secrets.OPEN_VSX_TOKEN }} ./dist/vscode_diff_viewer_${{ github.event.release.tag_name }}.vsix

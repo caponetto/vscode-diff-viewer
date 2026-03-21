@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-npx pretty-quick --staged
+npm run format:check:staged

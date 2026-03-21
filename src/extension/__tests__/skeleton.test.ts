@@ -11,124 +11,151 @@ jest.mock("vscode", () => ({
 
 describe("Skeleton Builder", () => {
   let mockWebviewUri: vscode.Uri;
-  let mockCssUris: vscode.Uri[];
+  let mockCommonCssUris: vscode.Uri[];
+  let mockLightHighlightCssUri: vscode.Uri;
+  let mockDarkHighlightCssUri: vscode.Uri;
+  const cspSource = "vscode-webview-resource:";
+  const nonce = "test-nonce";
+
+  const buildTestSkeleton = (overrides: Partial<Parameters<typeof buildSkeleton>[0]> = {}) =>
+    buildSkeleton({
+      webviewUri: mockWebviewUri,
+      commonCssUris: mockCommonCssUris,
+      lightHighlightCssUri: mockLightHighlightCssUri,
+      darkHighlightCssUri: mockDarkHighlightCssUri,
+      cspSource,
+      nonce,
+      ...overrides,
+    });
 
   beforeEach(() => {
     mockWebviewUri = { fsPath: "dist/webview.js", toString: () => "dist/webview.js" } as vscode.Uri;
-    mockCssUris = [
+    mockCommonCssUris = [
       { fsPath: "styles/reset.css", toString: () => "styles/reset.css" } as vscode.Uri,
       { fsPath: "styles/app.css", toString: () => "styles/app.css" } as vscode.Uri,
-      { fsPath: "styles/highlight.css", toString: () => "styles/highlight.css" } as vscode.Uri,
     ];
+    mockLightHighlightCssUri = {
+      fsPath: "styles/highlight-light.css",
+      toString: () => "styles/highlight-light.css",
+    } as vscode.Uri;
+    mockDarkHighlightCssUri = {
+      fsPath: "styles/highlight-dark.css",
+      toString: () => "styles/highlight-dark.css",
+    } as vscode.Uri;
   });
 
   describe("buildSkeleton", () => {
     it("should generate valid HTML structure", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
-      expect(html).toContain("<!DOCTYPE html>");
+      expect(html).toContain("<!doctype html>");
       expect(html).toContain('<html lang="en">');
       expect(html).toContain("</html>");
     });
 
     it("should include all required meta tags", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
-      expect(html).toContain('<meta charset="UTF-8">');
-      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0">');
-      expect(html).toContain('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">');
+      expect(html).toContain('<meta charset="UTF-8" />');
+      expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1.0" />');
+      expect(html).toContain('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />');
     });
 
     it("should include title tag", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       expect(html).toContain("<title></title>");
     });
 
     it("should include all CSS links", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       expect(html).toContain(`<link rel="stylesheet" href="styles/reset.css">`);
       expect(html).toContain(`<link rel="stylesheet" href="styles/app.css">`);
-      expect(html).toContain(`<link rel="stylesheet" href="styles/highlight.css">`);
+      expect(html).toContain(`id="${SkeletonElementIds.HighlightLightStylesheet}"`);
+      expect(html).toContain(`href="styles/highlight-light.css"`);
+      expect(html).toContain(`id="${SkeletonElementIds.HighlightDarkStylesheet}"`);
+      expect(html).toContain(`href="styles/highlight-dark.css"`);
     });
 
     it("should include webview script", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
-      expect(html).toContain(`<script src="dist/webview.js"></script>`);
+      expect(html).toContain(`<script nonce="${nonce}" src="dist/webview.js"></script>`);
     });
 
     it("should include all skeleton element IDs", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       expect(html).toContain(`id="${SkeletonElementIds.LoadingContainer}"`);
       expect(html).toContain(`id="${SkeletonElementIds.EmptyMessageContainer}"`);
+      expect(html).toContain(`id="${SkeletonElementIds.LargeDiffNoticeContainer}"`);
       expect(html).toContain(`id="${SkeletonElementIds.DiffContainer}"`);
       expect(html).toContain(`id="${SkeletonElementIds.ViewedIndicator}"`);
       expect(html).toContain(`id="${SkeletonElementIds.ViewedProgressContainer}"`);
-      expect(html).toContain(`id="${SkeletonElementIds.ViewedProgress}"`);
-      expect(html).toContain(`id="${SkeletonElementIds.MarkAllViewedContainer}"`);
-      expect(html).toContain(`id="${SkeletonElementIds.MarkAllViewedCheckbox}"`);
     });
 
     it("should include loading container with loading text", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       expect(html).toContain(`<div id="${SkeletonElementIds.LoadingContainer}">`);
       expect(html).toContain("<span>Loading...</span>");
     });
 
     it("should include empty message container with hidden style", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       expect(html).toContain(`<div id="${SkeletonElementIds.EmptyMessageContainer}" style="display: none">`);
       expect(html).toContain("<span>Empty diff file</span>");
     });
 
     it("should include diff container", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       expect(html).toContain(`<div id="${SkeletonElementIds.DiffContainer}"></div>`);
     });
 
-    it("should include footer with viewed elements", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+    it("should include the large diff notice container", () => {
+      const html = buildTestSkeleton();
 
-      expect(html).toContain("<footer>");
-      expect(html).toContain(`<span id="${SkeletonElementIds.ViewedIndicator}"></span>`);
-      expect(html).toContain(`<div id="${SkeletonElementIds.ViewedProgressContainer}">`);
-      expect(html).toContain(`<div id="${SkeletonElementIds.ViewedProgress}"></div>`);
-      expect(html).toContain("</div>");
+      expect(html).toContain(`<div id="${SkeletonElementIds.LargeDiffNoticeContainer}" style="display: none"></div>`);
     });
 
-    it("should include mark all viewed checkbox", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+    it("should include footer with viewed elements", () => {
+      const html = buildTestSkeleton();
 
-      expect(html).toContain(`<label id="${SkeletonElementIds.MarkAllViewedContainer}">`);
-      expect(html).toContain(
-        `<input id="${SkeletonElementIds.MarkAllViewedCheckbox}" type="checkbox" name="mark-all-as-viewed">`,
-      );
-      expect(html).toContain("Mark all as viewed");
-      expect(html).toContain("</input>");
-      expect(html).toContain("</label>");
+      expect(html).toContain("<footer>");
+      expect(html).toContain(`<span id="${SkeletonElementIds.ViewedIndicator}" aria-live="polite"></span>`);
+      expect(html).toContain(`<progress id="${SkeletonElementIds.ViewedProgressContainer}"`);
+      expect(html).toContain('aria-label="Viewed files progress"');
+      expect(html).toContain('max="100"');
+      expect(html).toContain('value="0"');
+      expect(html).toContain("</progress>");
+    });
+
+    it("should not include footer review action buttons", () => {
+      const html = buildTestSkeleton();
+
+      expect(html).not.toContain("Expand all");
+      expect(html).not.toContain("Collapse all");
+      expect(html).not.toContain("review-actions-container");
     });
 
     it("should handle empty CSS URIs array", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: [] });
+      const html = buildTestSkeleton({ commonCssUris: [] });
 
-      expect(html).toContain("<!DOCTYPE html>");
-      expect(html).toContain('<script src="dist/webview.js"></script>');
-      // Should not contain any CSS links
-      expect(html).not.toMatch(/<link rel="stylesheet"/);
+      expect(html).toContain("<!doctype html>");
+      expect(html).toContain(`<script nonce="${nonce}" src="dist/webview.js"></script>`);
+      expect(html).toContain(`id="${SkeletonElementIds.HighlightLightStylesheet}"`);
+      expect(html).toContain(`id="${SkeletonElementIds.HighlightDarkStylesheet}"`);
     });
 
     it("should handle single CSS URI", () => {
       const singleCssUri = [{ fsPath: "styles/single.css", toString: () => "styles/single.css" } as vscode.Uri];
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: singleCssUri });
+      const html = buildTestSkeleton({ commonCssUris: singleCssUri });
 
       expect(html).toContain(`<link rel="stylesheet" href="styles/single.css">`);
-      expect(html).toContain('<script src="dist/webview.js"></script>');
+      expect(html).toContain(`<script nonce="${nonce}" src="dist/webview.js"></script>`);
     });
 
     it("should handle multiple CSS URIs", () => {
@@ -136,18 +163,16 @@ describe("Skeleton Builder", () => {
         { fsPath: "styles/reset.css", toString: () => "styles/reset.css" } as vscode.Uri,
         { fsPath: "styles/app.css", toString: () => "styles/app.css" } as vscode.Uri,
         { fsPath: "styles/theme.css", toString: () => "styles/theme.css" } as vscode.Uri,
-        { fsPath: "styles/highlight.css", toString: () => "styles/highlight.css" } as vscode.Uri,
       ];
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: multipleCssUris });
+      const html = buildTestSkeleton({ commonCssUris: multipleCssUris });
 
       expect(html).toContain(`<link rel="stylesheet" href="styles/reset.css">`);
       expect(html).toContain(`<link rel="stylesheet" href="styles/app.css">`);
       expect(html).toContain(`<link rel="stylesheet" href="styles/theme.css">`);
-      expect(html).toContain(`<link rel="stylesheet" href="styles/highlight.css">`);
     });
 
     it("should generate valid HTML structure with proper nesting", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       // Check that the HTML structure is properly nested
       const headStart = html.indexOf("<head>");
@@ -161,7 +186,7 @@ describe("Skeleton Builder", () => {
     });
 
     it("should include all required elements in correct order", () => {
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: mockCssUris });
+      const html = buildTestSkeleton();
 
       // Check that elements appear in the expected order
       const loadingIndex = html.indexOf(SkeletonElementIds.LoadingContainer);
@@ -182,8 +207,8 @@ describe("Skeleton Builder", () => {
       ];
 
       differentUris.forEach((uri) => {
-        const html = buildSkeleton({ webviewUri: uri as vscode.Uri, cssUris: mockCssUris });
-        expect(html).toContain(`<script src="${uri.toString()}"></script>`);
+        const html = buildTestSkeleton({ webviewUri: uri as vscode.Uri });
+        expect(html).toContain(`<script nonce="${nonce}" src="${uri.toString()}"></script>`);
       });
     });
 
@@ -194,11 +219,19 @@ describe("Skeleton Builder", () => {
         { fsPath: "relative/path/theme.css", toString: () => "relative/path/theme.css" },
       ];
 
-      const html = buildSkeleton({ webviewUri: mockWebviewUri, cssUris: differentCssUris as vscode.Uri[] });
+      const html = buildTestSkeleton({ commonCssUris: differentCssUris as vscode.Uri[] });
 
       expect(html).toContain(`<link rel="stylesheet" href="styles/reset.css">`);
       expect(html).toContain(`<link rel="stylesheet" href="/absolute/path/app.css">`);
       expect(html).toContain(`<link rel="stylesheet" href="relative/path/theme.css">`);
+    });
+
+    it("should include content security policy meta tag", () => {
+      const html = buildTestSkeleton();
+
+      expect(html).toContain("Content-Security-Policy");
+      expect(html).toContain(`img-src ${cspSource} https: data:;`);
+      expect(html).toContain(`script-src 'nonce-${nonce}'`);
     });
   });
 });

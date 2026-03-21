@@ -1,6 +1,8 @@
 import {
   hasPayload,
   isMessageKind,
+  isMessageToExtension,
+  isMessageToWebview,
   MessageKind,
   MessagePayload,
   MessageToExtension,
@@ -9,6 +11,7 @@ import {
   MessageToExtensionHandler,
   MessageToWebviewHandler,
 } from "../message";
+import { isMessageEnvelope } from "../message-handler";
 
 // Mock the API types for testing
 interface TestExtensionApi {
@@ -67,6 +70,21 @@ describe("Message Types and Utilities", () => {
     });
   });
 
+  describe("isMessageEnvelope", () => {
+    it("should return true for message-shaped objects", () => {
+      expect(isMessageEnvelope({ kind: "ping" })).toBe(true);
+      expect(isMessageEnvelope({ kind: "updateWebview", payload: { data: "test" } })).toBe(true);
+    });
+
+    it("should return false for malformed messages", () => {
+      expect(isMessageEnvelope(null)).toBe(false);
+      expect(isMessageEnvelope(undefined)).toBe(false);
+      expect(isMessageEnvelope({})).toBe(false);
+      expect(isMessageEnvelope({ kind: 123 })).toBe(false);
+      expect(isMessageEnvelope("ping")).toBe(false);
+    });
+  });
+
   describe("isMessageKind", () => {
     it("should return true for matching message kind", () => {
       const message = { kind: "method1" };
@@ -115,6 +133,18 @@ describe("Message Types and Utilities", () => {
           expect(hasPayload(message)).toBe(false);
         }
       });
+    });
+  });
+
+  describe("Message Envelope Guards", () => {
+    it("should recognize valid extension messages", () => {
+      expect(isMessageToExtension({ kind: "requestWebviewAction", payload: { action: "expandAll" } })).toBe(true);
+      expect(isMessageToExtension({ kind: "unknown" })).toBe(false);
+    });
+
+    it("should recognize valid webview messages", () => {
+      expect(isMessageToWebview({ kind: "performWebviewAction", payload: { action: "expandAll" } })).toBe(true);
+      expect(isMessageToWebview({ kind: "performReviewAction", payload: { action: "expandAll" } })).toBe(false);
     });
   });
 
@@ -178,10 +208,10 @@ describe("Message Types and Utilities", () => {
     it("should create correct union types", () => {
       // These are compile-time tests to ensure the union types are correct
       const extensionMessage: MessageToExtension = { kind: "openFile", payload: { path: "test" } };
-      const webviewMessage: MessageToWebview = { kind: "ping" };
+      const webviewMessage: MessageToWebview = { kind: "performWebviewAction", payload: { action: "expandAll" } };
 
       expect(extensionMessage.kind).toBe("openFile");
-      expect(webviewMessage.kind).toBe("ping");
+      expect(webviewMessage.kind).toBe("performWebviewAction");
     });
   });
 });

@@ -72,3 +72,7 @@ export abstract class GenericMessageHandlerImpl {
     }
   }
 }
+
+export function isMessageEnvelope(message: unknown): message is { kind: string; payload?: unknown } {
+  return typeof message === "object" && message !== null && typeof (message as { kind?: unknown }).kind === "string";
+}

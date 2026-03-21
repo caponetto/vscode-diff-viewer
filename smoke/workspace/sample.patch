@@ -1,0 +1,30 @@
+diff --git a/src/renamed old.ts b/src/renamed new.ts
+similarity index 78%
+rename from src/renamed old.ts
+rename to src/renamed new.ts
+index 1111111..2222222 100644
+--- a/src/renamed old.ts
++++ b/src/renamed new.ts
+@@ -1,3 +1,4 @@
+ export const value = 1;
+-export const status = "old";
++export const status = "new";
++export const enabled = true;
+ export const label = "example";
+diff --git a/src/deleted file.ts b/src/deleted file.ts
+deleted file mode 100644
+index 3333333..0000000
+--- a/src/deleted file.ts
++++ /dev/null
+@@ -1,2 +0,0 @@
+-export const removed = true;
+-export const note = "deleted";
+diff --git a/src/added file.ts b/src/added file.ts
+new file mode 100644
+index 0000000..4444444
+--- /dev/null
++++ b/src/added file.ts
+@@ -0,0 +1,3 @@
++export const created = true;
++export const title = "sample";
++export const count = 3;

@@ -18,6 +18,8 @@ describe("convert :: extractNewFileNameFromDiffName", () => {
     ["{oldName.ts → newName.ts}", "newName.ts"],
     ["{oldDir → newDir}/file.ts", "newDir/file.ts"],
     ["dir/{oldName.ts → newName.ts}", "dir/newName.ts"],
+    ["{old file.ts → new file.ts}", "new file.ts"],
+    ["dir/{old folder → new folder}/file name.ts", "dir/new folder/file name.ts"],
   ])("should extract file name from diff name", (value: string, expected: string) => {
     expect(extractNewFileNameFromDiffName(value)).toBe(expected);
   });

@@ -30,6 +30,10 @@ export class ViewedStateStore {
     this.saveViewedState(viewedState);
   }
 
+  public clearViewedState(): void {
+    this.saveViewedState({});
+  }
+
   private saveViewedState(viewedState: ViewedState): void {
     if (!this.args.docId) {
       this.transientViewedState = viewedState;

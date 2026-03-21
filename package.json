@@ -14,7 +14,8 @@
     "url": "https://github.com/caponetto/vscode-diff-viewer/issues"
   },
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.75.0",
+    "node": "22.x"
   },
   "main": "./dist/extension.js",
   "browser": "./dist/extension.js",
@@ -44,7 +45,7 @@
       {
         "command": "diffviewer.showLineByLine",
         "title": "Show diff line by line",
-        "icon": "$(file)"
+        "icon": "$(list-unordered)"
       },
       {
         "command": "diffviewer.showSideBySide",
@@ -54,6 +55,21 @@
       {
         "command": "diffviewer.openCollapsed",
         "title": "Open diff collapsed (all viewed)"
+      },
+      {
+        "command": "diffviewer.expandAll",
+        "title": "Expand all files",
+        "icon": "$(expand-all)"
+      },
+      {
+        "command": "diffviewer.collapseAll",
+        "title": "Collapse all files",
+        "icon": "$(collapse-all)"
+      },
+      {
+        "command": "diffviewer.showRaw",
+        "title": "Show raw file",
+        "icon": "$(go-to-file)"
       }
     ],
     "customEditors": [
@@ -86,12 +102,13 @@
         "properties": {
           "diffviewer.colorScheme": {
             "type": "string",
-            "default": "light",
+            "default": "auto",
             "enum": [
+              "auto",
               "light",
               "dark"
             ],
-            "description": "The color scheme to visualize the diff"
+            "markdownDescription": "Color scheme used by the diff renderer. `auto` follows the active VS Code theme."
           },
           "diffviewer.outputFormat": {
             "type": "string",
@@ -100,12 +117,12 @@
               "line-by-line",
               "side-by-side"
             ],
-            "description": "The format of the output data"
+            "markdownDescription": "Layout used to render the diff."
           },
           "diffviewer.drawFileList": {
             "type": "boolean",
             "default": true,
-            "description": "Show a file list before the diff"
+            "markdownDescription": "Show the file summary list above the rendered diff."
           },
           "diffviewer.matching": {
             "type": "string",
@@ -115,32 +132,37 @@
               "char",
               "none"
             ],
-            "description": "Matching level"
+            "markdownDescription": "Granularity used to highlight inline changes."
           },
           "diffviewer.matchWordsThreshold": {
             "type": "number",
             "default": 0.25,
-            "description": "Similarity threshold for word matching"
+            "minimum": 0,
+            "maximum": 1,
+            "markdownDescription": "Similarity threshold used when `diffviewer.matching` is set to `word`."
           },
           "diffviewer.matchingMaxComparisons": {
             "type": "integer",
             "default": 2500,
-            "description": "Perform at most this much comparisons for line matching a block of changes"
+            "minimum": 0,
+            "markdownDescription": "Maximum number of comparisons performed while matching changed lines inside a block."
           },
           "diffviewer.maxLineSizeInBlockForComparison": {
             "type": "integer",
             "default": 200,
-            "description": "Maximum number os characters of the bigger line in a block to apply comparison"
+            "minimum": 0,
+            "markdownDescription": "Maximum line length allowed when comparing lines inside a changed block."
           },
           "diffviewer.maxLineLengthHighlight": {
             "type": "integer",
             "default": 10000,
-            "description": "Only perform diff changes highlight if lines are smaller than this"
+            "minimum": 0,
+            "markdownDescription": "Only highlight inline changes for lines shorter than this limit."
           },
           "diffviewer.renderNothingWhenEmpty": {
             "type": "boolean",
             "default": false,
-            "description": "Render nothing if the diff shows no change in its comparison"
+            "markdownDescription": "Render no file output when a comparison produces no visible changes."
           }
         }
       }
@@ -162,13 +184,28 @@
       "editor/title": [
         {
           "command": "diffviewer.showLineByLine",
-          "group": "navigation@1",
+          "group": "navigation@0",
           "when": "activeCustomEditorId == 'diffViewer' && config.diffviewer.outputFormat == 'side-by-side'"
         },
         {
           "command": "diffviewer.showSideBySide",
-          "group": "navigation@1",
+          "group": "navigation@0",
           "when": "activeCustomEditorId == 'diffViewer' && config.diffviewer.outputFormat == 'line-by-line'"
+        },
+        {
+          "command": "diffviewer.expandAll",
+          "group": "navigation@1",
+          "when": "activeCustomEditorId == 'diffViewer'"
+        },
+        {
+          "command": "diffviewer.collapseAll",
+          "group": "navigation@1",
+          "when": "activeCustomEditorId == 'diffViewer'"
+        },
+        {
+          "command": "diffviewer.showRaw",
+          "group": "navigation@1",
+          "when": "activeCustomEditorId == 'diffViewer'"
         }
       ]
     }
@@ -179,8 +216,10 @@
     "build:prod": "npm run lint && rimraf dist && webpack --mode=production",
     "format": "prettier --write . --ignore-path .gitignore",
     "format:check": "prettier --check . --ignore-path .gitignore",
+    "format:check:staged": "node ./scripts/check-staged-format.mjs",
     "pack:extension": "vsce package -o ./dist/vscode_diff_viewer_v$npm_package_version.vsix --githubBranch main",
-    "run:webmode": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --version=stable",
+    "run:webmode": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --quality stable --esm",
+    "smoke:web": "node ./scripts/smoke-web.mjs",
     "jest:run": "jest --silent",
     "test": "npm run jest:run --",
     "test:coverage": "jest --coverage --silent",
@@ -198,7 +237,7 @@
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
     "@typescript-eslint/parser": "^8.25.0",
-    "@vscode/test-web": "^0.0.71",
+    "@vscode/test-web": "^0.0.80",
     "@vscode/vsce": "^3.2.2",
     "css-loader": "^7.1.2",
     "eslint": "^9.21.0",
@@ -206,7 +245,7 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "husky": "^9.1.7",
     "jest": "^29.7.0",
-    "path-browserify": "^1.0.1",
+    "jest-environment-jsdom": "^30.3.0",
     "prettier": "^3.5.2",
     "rimraf": "^6.0.1",
     "source-map-loader": "^5.0.0",
@@ -214,7 +253,6 @@
     "ts-jest": "^29.2.6",
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
-    "tslint-config-prettier": "^1.18.0",
     "typescript": "5.7.3",
     "webpack": "^5.105.0",
     "webpack-cli": "^6.0.1"
