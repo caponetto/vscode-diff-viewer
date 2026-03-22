@@ -27,20 +27,19 @@ body {
   height: 100%;
   background-color: var(--diff-viewer--background) !important;
   color: var(--diff-viewer--foreground) !important;
-  padding: 1px;
   display: flex;
   flex-direction: column;
   scrollbar-gutter: stable;
 }
 
-body * {
+body {
   font-size: var(--vscode-editor-font-size);
   line-height: 1.4;
 }
 
 body footer {
   position: sticky;
-  bottom: 0px;
+  bottom: 0;
   padding: 6px 8px 4px 8px;
   border-top: 1px solid var(--diff-viewer--border);
   margin-top: auto;
@@ -186,6 +185,7 @@ label.d2h-file-collapse.changed-since-last-view::after {
   position: absolute;
   top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
   z-index: 100;
 }

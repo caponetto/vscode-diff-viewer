@@ -72,5 +72,5 @@ async function exists(uri: vscode.Uri): Promise<boolean> {
 }
 
 function isAbsolutePath(path: string): boolean {
-  return /^(?:\/|[a-zA-Z]:[\\/])/.test(path);
+  return /^(?:\/|\/\/|\\\\|[a-zA-Z]:[\\/])/.test(path);
 }

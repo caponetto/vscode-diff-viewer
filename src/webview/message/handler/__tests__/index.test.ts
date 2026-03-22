@@ -4,11 +4,11 @@
 
 import { ColorSchemeType, DiffFile } from "diff2html/lib/types";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
-import { AppConfig } from "../../../extension/configuration";
-import { SkeletonElementIds } from "../../../shared/css/elements";
-import { UpdateWebviewPayload } from "../api";
-import { MessageToWebviewHandlerImpl } from "../handler";
-import { getSha1Hash } from "../hash";
+import { AppConfig } from "../../../../extension/configuration";
+import { SkeletonElementIds } from "../../../../shared/css/elements";
+import { UpdateWebviewPayload } from "../../api";
+import { MessageToWebviewHandlerImpl } from "..";
+import { getSha1Hash } from "../../hash";
 
 jest.mock("diff2html/lib/ui/js/diff2html-ui-slim.js", () => ({
   Diff2HtmlUI: jest.fn().mockImplementation((container: HTMLElement, diffFiles: DiffFile[]) => ({
@@ -24,12 +24,22 @@ jest.mock("diff2html/lib/ui/js/diff2html-ui-slim.js", () => ({
                 </label>
               </div>
               <div class="d2h-file-diff">
-                <table>
-                  <tr>
-                    <td class="d2h-code-side-linenumber">10</td>
-                    <td class="d2h-code-line">content</td>
-                  </tr>
-                </table>
+                <div class="d2h-file-side-diff">
+                  <table>
+                    <tr>
+                      <td class="d2h-code-side-linenumber d2h-cntx">11</td>
+                      <td class="d2h-code-line">left</td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="d2h-file-side-diff">
+                  <table>
+                    <tr>
+                      <td class="d2h-code-side-linenumber d2h-cntx">12</td>
+                      <td class="d2h-code-line">content</td>
+                    </tr>
+                  </table>
+                </div>
               </div>
             </div>`,
         )
@@ -38,7 +48,7 @@ jest.mock("diff2html/lib/ui/js/diff2html-ui-slim.js", () => ({
   })),
 }));
 
-jest.mock("../hash", () => ({
+jest.mock("../../hash", () => ({
   getSha1Hash: jest.fn(),
 }));
 
@@ -225,5 +235,135 @@ describe("MessageToWebviewHandlerImpl", () => {
     );
 
     expect(Diff2HtmlUI).toHaveBeenCalled();
+  });
+
+  it("returns early when the diff container is missing", async () => {
+    document.getElementById(SkeletonElementIds.DiffContainer)?.remove();
+
+    await expect(
+      handler.updateWebview(
+        createUpdatePayload({
+          diffFiles: [],
+          accessiblePaths: [],
+          viewedState: {},
+          collapseAll: false,
+          performance: { isLargeDiff: false, deferViewedStateHashing: false },
+        }),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it("handles expand, collapse and showRaw actions", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+        viewedState: {},
+        collapseAll: false,
+        performance: { isLargeDiff: false, deferViewedStateHashing: false },
+      }),
+    );
+
+    handler.performWebviewAction({ action: "collapseAll" });
+    await Promise.resolve();
+    handler.performWebviewAction({ action: "expandAll" });
+    await Promise.resolve();
+    handler.performWebviewAction({ action: "showRaw" });
+
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "toggleFileViewed",
+        payload: expect.objectContaining({
+          path: "src/file.ts",
+          viewedSha1: expect.stringContaining("sha:"),
+        }),
+      }),
+    );
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "toggleFileViewed",
+      payload: { path: "src/file.ts", viewedSha1: null },
+    });
+  });
+
+  it("opens files when clicking file names and line numbers", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+        viewedState: {},
+        collapseAll: false,
+        performance: { isLargeDiff: false, deferViewedStateHashing: false },
+      }),
+    );
+
+    const fileLink = document.querySelector(".d2h-file-name") as HTMLElement;
+    const lineNumber = document.querySelectorAll(".d2h-code-side-linenumber")[1] as HTMLElement;
+
+    fileLink.click();
+    lineNumber.click();
+
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "openFile",
+      payload: { path: "src/file.ts", line: undefined },
+    });
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "openFile",
+      payload: { path: "src/file.ts", line: 12 },
+    });
+  });
+
+  it("does not open files for ignored side-by-side left-column clicks", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+        viewedState: {},
+        collapseAll: false,
+        performance: { isLargeDiff: false, deferViewedStateHashing: false },
+      }),
+    );
+
+    const lineNumber = document.querySelectorAll(".d2h-code-side-linenumber")[0] as HTMLElement;
+    lineNumber.click();
+
+    expect(postMessageToExtensionFn).not.toHaveBeenCalledWith(expect.objectContaining({ kind: "openFile" }));
+  });
+
+  it("marks files as changed since last view when hashes differ", async () => {
+    mockGetSha1Hash.mockResolvedValue("sha:new");
+
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+        viewedState: { "src/file.ts": "sha:old" },
+        collapseAll: false,
+        performance: { isLargeDiff: false, deferViewedStateHashing: false },
+      }),
+    );
+
+    const toggle = document.querySelector(".d2h-file-collapse-input") as HTMLInputElement;
+    const label = document.querySelector(".d2h-file-collapse") as HTMLElement;
+    expect(toggle.classList.contains("changed-since-last-view")).toBe(true);
+    expect(label.classList.contains("changed-since-last-view")).toBe(true);
+  });
+
+  it("handles missing footer and missing theme stylesheets safely", async () => {
+    document.getElementById(SkeletonElementIds.ViewedIndicator)?.remove();
+    document.getElementById(SkeletonElementIds.HighlightLightStylesheet)?.remove();
+    document.getElementById(SkeletonElementIds.HighlightDarkStylesheet)?.remove();
+    document.getElementById(SkeletonElementIds.EmptyMessageContainer)?.remove();
+
+    await expect(
+      handler.updateWebview(
+        createUpdatePayload({
+          diffFiles: [],
+          accessiblePaths: [],
+          viewedState: {},
+          collapseAll: false,
+          performance: { isLargeDiff: false, deferViewedStateHashing: false },
+        }),
+      ),
+    ).resolves.toBeUndefined();
   });
 });

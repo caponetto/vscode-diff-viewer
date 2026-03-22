@@ -16,10 +16,18 @@ runs:
         npm ci
 
     - name: "Check :: lock"
+      if: runner.os == 'Linux'
       shell: bash
       run: git diff --exit-code -- package-lock.json
 
     - name: "Check :: format"
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         npm run format:check
+
+    - name: "Install :: Playwright Chromium"
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        npx playwright install --with-deps chromium

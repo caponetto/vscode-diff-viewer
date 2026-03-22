@@ -1,42 +1,27 @@
 import { ColorSchemeType, DiffFile } from "diff2html/lib/types";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
-import { AppConfig } from "../../extension/configuration";
-import { ViewedState } from "../../extension/viewed-state";
-import { CssPropertiesBasedOnTheme, SkeletonElementIds } from "../../shared/css/elements";
-import { extractNewFileNameFromDiffName, extractNumberFromString } from "../../shared/extract";
-import { MessageToExtension, MessageToWebviewHandler } from "../../shared/message";
-import { GenericMessageHandlerImpl } from "../../shared/message-handler";
-import { AppTheme } from "../../shared/types";
-import { Diff2HtmlCssClasses } from "../css/classes";
-import { Diff2HtmlCssClassElements } from "../css/elements";
-import { UpdateWebviewPayload, WebviewAction, WebviewUiState } from "./api";
-import { getSha1Hash } from "./hash";
-
-const CHANGED_SINCE_VIEWED = "changed-since-last-view";
-const SELECTED_FILE = "selected-file";
-const FILE_ACTIONS_CLASS = "diff-viewer-file-actions";
-const FILE_ACTION_BUTTON_CLASS = "diff-viewer-file-action-button";
-const DEFAULT_UI_STATE: WebviewUiState = { scrollTop: 0 };
-
-interface FileDomBinding {
-  fileContainer: HTMLElement;
-  filePath: string;
-  fileNameText: string;
-  viewedToggle?: HTMLInputElement;
-}
-
-interface DiffFileViewModel {
-  primaryPath: string;
-  oldPath?: string;
-  newPath?: string;
-  isOldPathAccessible: boolean;
-  isNewPathAccessible: boolean;
-}
-
-interface WebviewStateAdapter {
-  getState: () => WebviewUiState | undefined;
-  setState: (state: WebviewUiState) => void;
-}
+import { AppConfig } from "../../../extension/configuration";
+import { ViewedState } from "../../../extension/viewed-state";
+import { SkeletonElementIds } from "../../../shared/css/elements";
+import { extractNumberFromString } from "../../../shared/extract";
+import { MessageToExtension, MessageToWebviewHandler } from "../../../shared/message";
+import { GenericMessageHandlerImpl } from "../../../shared/message-handler";
+import { Diff2HtmlCssClasses } from "../../css/classes";
+import { Diff2HtmlCssClassElements } from "../../css/elements";
+import { UpdateWebviewPayload, WebviewAction, WebviewUiState } from "../api";
+import { getSha1Hash } from "../hash";
+import { buildDiffFileMap, buildDiffFileViewModel, buildDiffHashes } from "./models";
+import {
+  CHANGED_SINCE_VIEWED,
+  DEFAULT_UI_STATE,
+  DiffFileViewModel,
+  FILE_ACTION_BUTTON_CLASS,
+  FILE_ACTIONS_CLASS,
+  FileDomBinding,
+  SELECTED_FILE,
+  WebviewStateAdapter,
+} from "./types";
+import { setupTheme, showEmpty, showLoading, updateFooter, updateHighlightTheme, updateLargeDiffNotice } from "./ui";
 
 export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl implements MessageToWebviewHandler {
   private currentConfig: AppConfig | undefined = undefined;
@@ -61,8 +46,8 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
   }
 
   public prepare(): void {
-    this.showLoading(true);
-    this.showEmpty(false);
+    showLoading(true);
+    showEmpty(false);
   }
 
   public ping(): void {
@@ -77,18 +62,22 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
 
     await this.withLoading(async () => {
       if (payload.diffFiles.length === 0) {
-        this.showEmpty(true);
+        showEmpty(true);
       }
 
       this.currentConfig = payload.config;
       this.accessiblePaths = new Set(payload.accessiblePaths);
-      this.currentDiffFilesByPath = this.buildDiffFileMap(payload.diffFiles);
-      this.currentDiffHashes = await this.buildDiffHashes(payload);
+      this.currentDiffFilesByPath = buildDiffFileMap(payload.diffFiles, this.accessiblePaths);
+      this.currentDiffHashes = await buildDiffHashes({
+        payload,
+        currentDiffFilesByPath: this.currentDiffFilesByPath,
+        accessiblePaths: this.accessiblePaths,
+      });
 
       const appTheme = this.currentConfig.diff2html.colorScheme === ColorSchemeType.DARK ? "dark" : "light";
-      this.setupTheme(appTheme);
-      this.updateHighlightTheme(appTheme);
-      this.updateLargeDiffNotice(payload.performance.warning);
+      setupTheme(appTheme);
+      updateHighlightTheme(appTheme);
+      updateLargeDiffNotice(payload.performance.warning);
 
       if (payload.collapseAll) {
         diffContainer.style.display = "none";
@@ -111,7 +100,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       }
 
       this.restoreSelection();
-      this.updateFooter();
+      updateFooter(this.fileBindings);
 
       diffContainer.style.display = "block";
     });
@@ -122,26 +111,17 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       case "collapseAll":
         this.setAllViewedStates(true);
         this.clearChangedSinceViewedIndicators();
-        this.updateFooter();
+        updateFooter(this.fileBindings);
         return;
       case "expandAll":
         this.setAllViewedStates(false);
         this.clearChangedSinceViewedIndicators();
         this.persistUiState({ selectedPath: undefined });
-        this.updateFooter();
+        updateFooter(this.fileBindings);
         return;
       case "showRaw":
         return;
     }
-  }
-
-  private setupTheme(theme: AppTheme): void {
-    const root = document.documentElement;
-
-    CssPropertiesBasedOnTheme.forEach((property) => {
-      const value = getComputedStyle(root).getPropertyValue(`${property}--${theme}`);
-      root.style.setProperty(property, value);
-    });
   }
 
   private registerDiffContainerHandlers(diffContainer: HTMLElement): void {
@@ -172,7 +152,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     this.getViewedToggleLabel(viewedToggle)?.classList.remove(CHANGED_SINCE_VIEWED);
     this.scrollDiffFileHeaderIntoView(viewedToggle);
     this.selectDiffFile(this.getDiffElementFileName(viewedToggle));
-    this.updateFooter();
+    updateFooter(this.fileBindings);
     void this.sendFileViewedMessage(viewedToggle, viewedToggle.checked);
   }
 
@@ -283,7 +263,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
         return [];
       }
 
-      const viewModel = this.buildDiffFileViewModel(diffFile);
+      const viewModel = buildDiffFileViewModel(diffFile, this.accessiblePaths);
       fileContainer.dataset.diffPath = viewModel.primaryPath;
       this.appendFileNavigationActions(fileContainer, viewModel);
       return viewModel.primaryPath
@@ -292,8 +272,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
               fileContainer,
               filePath: viewModel.primaryPath,
               fileNameText:
-                fileContainer.querySelector(Diff2HtmlCssClassElements.A__FileName)?.textContent?.toLocaleLowerCase() ??
-                "",
+                fileContainer.querySelector(Diff2HtmlCssClassElements.A__FileName)?.textContent?.toLowerCase() ?? "",
               viewedToggle:
                 fileContainer.querySelector<HTMLInputElement>(Diff2HtmlCssClassElements.Input__ViewedToggle) ??
                 undefined,
@@ -301,29 +280,6 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
           ]
         : [];
     });
-  }
-
-  private buildDiffFileViewModel(diffFile: DiffFile): DiffFileViewModel {
-    const oldPath = this.normalizeDiffFilePath(diffFile.oldName);
-    const newPath = this.normalizeDiffFilePath(diffFile.newName);
-    const primaryPath = newPath ?? oldPath ?? "";
-
-    return {
-      primaryPath,
-      oldPath,
-      newPath,
-      isOldPathAccessible: oldPath ? this.accessiblePaths.has(oldPath) : false,
-      isNewPathAccessible: newPath ? this.accessiblePaths.has(newPath) : false,
-    };
-  }
-
-  private normalizeDiffFilePath(path?: string): string | undefined {
-    if (!path || path === "/dev/null") {
-      return;
-    }
-
-    const normalizedPath = extractNewFileNameFromDiffName(path);
-    return normalizedPath === "/dev/null" ? undefined : normalizedPath;
   }
 
   private appendFileNavigationActions(fileContainer: HTMLElement, viewModel: DiffFileViewModel): void {
@@ -425,40 +381,6 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     });
   }
 
-  private async buildDiffHashes(payload: UpdateWebviewPayload): Promise<Record<string, string>> {
-    const targetPaths = payload.performance.deferViewedStateHashing
-      ? Object.keys(payload.viewedState)
-      : payload.diffFiles
-          .map((diffFile) => this.buildDiffFileViewModel(diffFile).primaryPath)
-          .filter((filePath): filePath is string => filePath.length > 0);
-
-    const entries = await Promise.all(
-      targetPaths.map(async (fileName) => {
-        if (!fileName) {
-          return undefined;
-        }
-
-        const diffFile = this.currentDiffFilesByPath[fileName];
-        if (!diffFile) {
-          return undefined;
-        }
-
-        return [fileName, await getSha1Hash(JSON.stringify(diffFile))] as const;
-      }),
-    );
-
-    return Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => Boolean(entry)));
-  }
-
-  private buildDiffFileMap(diffFiles: DiffFile[]): Record<string, DiffFile> {
-    return Object.fromEntries(
-      diffFiles.flatMap((diffFile) => {
-        const filePath = this.buildDiffFileViewModel(diffFile).primaryPath;
-        return filePath ? [[filePath, diffFile] as const] : [];
-      }),
-    );
-  }
-
   private async getOrCreateDiffHash(fileName: string): Promise<string | null> {
     const cachedHash = this.currentDiffHashes[fileName];
     if (cachedHash) {
@@ -537,75 +459,12 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     return toggle.closest(Diff2HtmlCssClassElements.Label__ViewedToggle);
   }
 
-  private getViewedCount(): number {
-    return this.fileBindings.reduce((count, { viewedToggle }) => count + (viewedToggle?.checked ? 1 : 0), 0);
-  }
-
-  private updateFooter(): void {
-    const indicator = document.getElementById(SkeletonElementIds.ViewedIndicator);
-    if (!indicator) {
-      return;
-    }
-
-    const allCount = this.fileBindings.length;
-    if (allCount === 0) {
-      return;
-    }
-
-    const viewedCount = this.getViewedCount();
-    indicator.textContent = `${viewedCount} / ${allCount} files viewed`;
-
-    const viewedProgressContainer = document.getElementById(SkeletonElementIds.ViewedProgressContainer);
-    if (viewedProgressContainer instanceof HTMLProgressElement) {
-      viewedProgressContainer.value = Math.round((viewedCount / allCount) * 100);
-    }
-  }
-
   private async withLoading(runnable: () => Promise<void>): Promise<void> {
-    this.showLoading(true);
-    this.showEmpty(false);
+    showLoading(true);
+    showEmpty(false);
 
     await runnable();
 
-    this.showLoading(false);
-  }
-
-  private showLoading(isLoading: boolean): void {
-    const loadingContainer = document.getElementById(SkeletonElementIds.LoadingContainer);
-    if (!loadingContainer) {
-      return;
-    }
-
-    loadingContainer.style.display = isLoading ? "block" : "none";
-  }
-
-  private showEmpty(isEmpty: boolean): void {
-    const emptyMessageContainer = document.getElementById(SkeletonElementIds.EmptyMessageContainer);
-    if (!emptyMessageContainer) {
-      return;
-    }
-
-    emptyMessageContainer.style.display = isEmpty ? "block" : "none";
-  }
-
-  private updateLargeDiffNotice(warning?: string): void {
-    const notice = document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer);
-    if (!notice) {
-      return;
-    }
-
-    notice.textContent = warning ?? "";
-    notice.style.display = warning ? "block" : "none";
-  }
-
-  private updateHighlightTheme(theme: AppTheme): void {
-    const lightStylesheet = document.getElementById(SkeletonElementIds.HighlightLightStylesheet);
-    const darkStylesheet = document.getElementById(SkeletonElementIds.HighlightDarkStylesheet);
-    if (!(lightStylesheet instanceof HTMLLinkElement) || !(darkStylesheet instanceof HTMLLinkElement)) {
-      return;
-    }
-
-    lightStylesheet.disabled = theme === "dark";
-    darkStylesheet.disabled = theme !== "dark";
+    showLoading(false);
   }
 }

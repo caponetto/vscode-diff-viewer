@@ -172,4 +172,23 @@ describe("resolveAccessibleUri", () => {
     expect(workspaceFolder.uri.with).toHaveBeenCalledWith({ path: "/src/file.ts" });
     expect(resolvedUri).toEqual(absoluteWorkspaceUri);
   });
+
+  it("treats UNC paths as absolute paths when they exist", async () => {
+    const uncPath = String.raw`\\server\share\file.ts`;
+    const uncUri = {
+      fsPath: uncPath,
+      path: uncPath,
+      scheme: "file",
+    };
+    (vscode.Uri.file as jest.Mock).mockReturnValue(uncUri);
+    (vscode.workspace.fs.stat as jest.Mock).mockResolvedValue({});
+
+    const resolvedUri = await resolveAccessibleUri({
+      diffDocument,
+      path: uncPath,
+    });
+
+    expect(vscode.Uri.file).toHaveBeenCalledWith(uncPath);
+    expect(resolvedUri).toBe(uncUri);
+  });
 });

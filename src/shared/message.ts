@@ -1,5 +1,5 @@
-import { MessageToExtensionApi } from "../extension/message/api";
-import { MessageToWebviewApi } from "../webview/message/api";
+import { MESSAGE_TO_EXTENSION_KINDS, MessageToExtensionApi } from "../extension/message/api";
+import { MESSAGE_TO_WEBVIEW_KINDS, MessageToWebviewApi } from "../webview/message/api";
 
 /**
  * Extracts the argument type from a function type.
@@ -118,11 +118,11 @@ export function isMessageKind<T extends { kind: string }>(
 }
 
 export function isMessageToExtension(message: unknown): message is MessageToExtension {
-  return isMessageKindRecord(message, ["pong", "openFile", "toggleFileViewed", "requestWebviewAction"]);
+  return isMessageKindRecord(message, MESSAGE_TO_EXTENSION_KINDS);
 }
 
 export function isMessageToWebview(message: unknown): message is MessageToWebview {
-  return isMessageKindRecord(message, ["ping", "prepare", "updateWebview", "performWebviewAction"]);
+  return isMessageKindRecord(message, MESSAGE_TO_WEBVIEW_KINDS);
 }
 
 function isMessageKindRecord<TKinds extends string>(

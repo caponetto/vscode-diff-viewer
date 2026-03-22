@@ -44,10 +44,6 @@ jobs:
         if: matrix.os != 'ubuntu-latest'
         run: npm test
 
-      - name: "Install Playwright Chromium (Ubuntu only)"
-        if: matrix.os == 'ubuntu-latest'
-        run: npx playwright install --with-deps chromium
-
       - name: "Web Smoke Test (Ubuntu only)"
         if: matrix.os == 'ubuntu-latest'
         run: npm run smoke:web

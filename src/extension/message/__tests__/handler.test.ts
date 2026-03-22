@@ -281,7 +281,7 @@ describe("MessageToExtensionHandlerImpl", () => {
       await handler.openFile(payload);
 
       expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-        'Cannot locate the file "test.ts" neither in the workspace nor by the specified path.',
+        'Cannot locate the file "test.ts" in the workspace or at the specified path.',
       );
     });
   });

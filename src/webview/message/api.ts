@@ -32,3 +32,10 @@ export interface MessageToWebviewApi {
   updateWebview: (payload: UpdateWebviewPayload) => Promise<void>;
   performWebviewAction: (payload: { action: WebviewAction }) => void;
 }
+
+export const MESSAGE_TO_WEBVIEW_KINDS = [
+  "ping",
+  "prepare",
+  "updateWebview",
+  "performWebviewAction",
+] as const satisfies readonly (keyof MessageToWebviewApi)[];

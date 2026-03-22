@@ -19,7 +19,7 @@ module.exports = async (_env, argv) => {
       path: path.resolve(__dirname, "./dist"),
       filename: "[name].js",
       libraryTarget: "umd",
-      globalObject: "this",
+      globalObject: "globalThis",
     },
     performance: {
       maxEntrypointSize: 1024 * 1024 * 2,
@@ -55,9 +55,6 @@ module.exports = async (_env, argv) => {
     resolve: {
       extensions: [".tsx", ".ts", ".js", ".jsx"],
       modules: [path.resolve("./node_modules"), path.resolve("./src")],
-      fallback: {
-        fs: false,
-      },
     },
   };
 
@@ -82,6 +79,12 @@ module.exports = async (_env, argv) => {
       target: "web",
       entry: {
         webview: "./src/webview/index.ts",
+      },
+      resolve: {
+        ...baseConfig.resolve,
+        fallback: {
+          fs: false,
+        },
       },
     },
   ];

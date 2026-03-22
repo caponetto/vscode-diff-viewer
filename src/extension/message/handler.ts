@@ -29,7 +29,7 @@ export class MessageToExtensionHandlerImpl extends GenericMessageHandlerImpl imp
     });
     if (!uri) {
       vscode.window.showWarningMessage(
-        `Cannot locate the file "${getPathBaseName(payload.path)}" neither in the workspace nor by the specified path.`,
+        `Cannot locate the file "${getPathBaseName(payload.path)}" in the workspace or at the specified path.`,
       );
       return;
     }

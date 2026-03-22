@@ -304,7 +304,7 @@ describe("ViewedStateStore", () => {
         "file_with_underscores.ts",
         "file.with.dots.ts",
         "file/with/slashes.ts",
-        "file\\with\\backslashes.ts",
+        String.raw`file\with\backslashes.ts`,
         "file@with#special$chars.ts",
       ];
 

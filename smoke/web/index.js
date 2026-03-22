@@ -3,6 +3,7 @@ const vscode = require("vscode");
 const OPEN_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 100;
 const FINAL_DELAY_MS = 2_000;
+const RUN_TIMEOUT_MS = 120_000;
 
 async function waitFor(condition, message) {
   const startedAt = Date.now();
@@ -32,6 +33,7 @@ function isTabInputTextForUri(input, expectedUri) {
 }
 
 async function openDiffViewer(sampleUri) {
+  console.log(`[smoke] Opening Diff Viewer for ${sampleUri.path}`);
   await vscode.commands.executeCommand("vscode.openWith", sampleUri, "diffViewer");
 
   await waitFor(async () => {
@@ -43,6 +45,7 @@ async function openDiffViewer(sampleUri) {
 async function openCollapsedDiffViewer(sampleUri) {
   const collapsedUri = sampleUri.with({ query: "collapsed" });
 
+  console.log(`[smoke] Opening collapsed Diff Viewer for ${sampleUri.path}`);
   await vscode.commands.executeCommand("diffviewer.openCollapsed", sampleUri);
 
   await waitFor(async () => {
@@ -52,6 +55,7 @@ async function openCollapsedDiffViewer(sampleUri) {
 }
 
 async function openRawEditor(sampleUri) {
+  console.log(`[smoke] Opening raw editor for ${sampleUri.path}`);
   await vscode.commands.executeCommand("diffviewer.showRaw");
 
   await waitFor(async () => {
@@ -61,10 +65,12 @@ async function openRawEditor(sampleUri) {
 }
 
 async function runScenario(sampleUri) {
+  console.log(`[smoke] Starting scenario for ${sampleUri.path}`);
   await openDiffViewer(sampleUri);
   await openRawEditor(sampleUri);
   await openDiffViewer(sampleUri);
   await openCollapsedDiffViewer(sampleUri);
+  console.log(`[smoke] Finished scenario for ${sampleUri.path}`);
 }
 
 async function run() {
@@ -77,11 +83,25 @@ async function run() {
   const spacesUri = vscode.Uri.joinPath(workspaceFolder.uri, "spaces.patch");
   const largeUri = vscode.Uri.joinPath(workspaceFolder.uri, "large.patch");
 
-  await runScenario(sampleUri);
-  await runScenario(spacesUri);
-  await runScenario(largeUri);
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`Smoke test exceeded ${RUN_TIMEOUT_MS}ms.`)), RUN_TIMEOUT_MS);
+  });
 
-  await new Promise((resolve) => setTimeout(resolve, FINAL_DELAY_MS));
+  try {
+    await Promise.race([
+      (async () => {
+        await runScenario(sampleUri);
+        await runScenario(spacesUri);
+        await runScenario(largeUri);
+
+        await new Promise((resolve) => setTimeout(resolve, FINAL_DELAY_MS));
+      })(),
+      timeoutPromise,
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 module.exports = {

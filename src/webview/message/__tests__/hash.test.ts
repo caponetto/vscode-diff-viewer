@@ -1,5 +1,5 @@
 import { getSha1Hash } from "../hash";
-import { webcrypto } from "crypto";
+import { webcrypto } from "node:crypto";
 
 declare global {
   interface Window {
@@ -8,7 +8,7 @@ declare global {
 }
 
 // Set up the crypto mock for testing
-(global as unknown as { window: Window }).window = {
+(globalThis as unknown as { window: Window }).window = {
   crypto: webcrypto as Crypto,
 } as Window;
 

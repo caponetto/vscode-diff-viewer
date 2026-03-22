@@ -6,3 +6,10 @@ export interface MessageToExtensionApi {
   toggleFileViewed: (payload: { path: string; viewedSha1: string | null }) => void;
   requestWebviewAction: (payload: { action: WebviewAction }) => void;
 }
+
+export const MESSAGE_TO_EXTENSION_KINDS = [
+  "pong",
+  "openFile",
+  "toggleFileViewed",
+  "requestWebviewAction",
+] as const satisfies readonly (keyof MessageToExtensionApi)[];
