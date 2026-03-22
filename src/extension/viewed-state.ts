@@ -6,7 +6,7 @@ export class ViewedStateStore {
   // transient state is used if args.docId is empty
   private transientViewedState: ViewedState = {};
 
-  public constructor(private args: { docId?: string; context: vscode.ExtensionContext }) {}
+  public constructor(readonly args: { docId?: string; context: vscode.ExtensionContext }) {}
 
   public getViewedState(): ViewedState {
     if (!this.args.docId) {
@@ -30,13 +30,17 @@ export class ViewedStateStore {
     this.saveViewedState(viewedState);
   }
 
+  public clearViewedState(): void {
+    this.saveViewedState({});
+  }
+
   private saveViewedState(viewedState: ViewedState): void {
-    if (!this.args.docId) {
-      this.transientViewedState = viewedState;
-    } else {
+    if (this.args.docId) {
       // remove the state if no files are marked as viewed
       const stateToSave = Object.keys(viewedState).length === 0 ? undefined : viewedState;
       this.args.context.workspaceState.update(this.args.docId, stateToSave);
+    } else {
+      this.transientViewedState = viewedState;
     }
   }
 }

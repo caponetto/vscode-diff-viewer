@@ -62,13 +62,17 @@ export abstract class GenericMessageHandlerImpl {
     const method = this[message.kind as keyof this] as (...args: unknown[]) => unknown;
 
     if (typeof method === "function") {
-      if (message.payload !== undefined) {
-        method.call(this, message.payload);
-      } else {
+      if (message.payload === undefined) {
         method.call(this);
+      } else {
+        method.call(this, message.payload);
       }
     } else {
-      throw new Error(`Method ${String(message.kind)} not found on handler`);
+      throw new TypeError(`Method ${String(message.kind)} not found on handler`);
     }
   }
+}
+
+export function isMessageEnvelope(message: unknown): message is { kind: string; payload?: unknown } {
+  return typeof message === "object" && message !== null && typeof (message as { kind?: unknown }).kind === "string";
 }

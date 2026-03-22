@@ -232,6 +232,28 @@ describe("ViewedStateStore", () => {
     });
   });
 
+  describe("clearViewedState", () => {
+    it("should remove persisted state for the document", () => {
+      const docId = "test-doc-id";
+      workspaceState.set(docId, { "file1.ts": "sha1-abc123" });
+
+      const store = new ViewedStateStore({ docId, context: mockContext });
+      store.clearViewedState();
+
+      expect(store.getViewedState()).toEqual({});
+      expect(mockContext.workspaceState.update).toHaveBeenCalledWith(docId, undefined);
+    });
+
+    it("should clear transient state when no docId is provided", () => {
+      const store = new ViewedStateStore({ context: mockContext });
+      store.toggleViewedState({ path: "file1.ts", viewedSha1: "sha1-abc123" });
+
+      store.clearViewedState();
+
+      expect(store.getViewedState()).toEqual({});
+    });
+  });
+
   describe("saveViewedState (private method via public methods)", () => {
     it("should save to workspace state when docId is provided", () => {
       const docId = "test-doc-id";
@@ -282,7 +304,7 @@ describe("ViewedStateStore", () => {
         "file_with_underscores.ts",
         "file.with.dots.ts",
         "file/with/slashes.ts",
-        "file\\with\\backslashes.ts",
+        String.raw`file\with\backslashes.ts`,
         "file@with#special$chars.ts",
       ];
 

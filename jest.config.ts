@@ -7,11 +7,9 @@ export default async (): Promise<Config.InitialOptions> => {
     moduleFileExtensions: ["js", "jsx", "ts", "tsx"],
     testRegex: "/__tests__/.*\\.test\\.(jsx?|tsx?)$",
     transform: {
+      "^.+\\.html$": "<rootDir>/jest.htmlTransform.cjs",
       "^.+\\.jsx?$": "babel-jest",
       "^.+\\.tsx?$": "ts-jest",
-    },
-    moduleNameMapper: {
-      "^vscode$": "<rootDir>/node_modules/@types/vscode/index.d.ts",
     },
     setupFilesAfterEnv: ["<rootDir>/src/extension/message/__tests__/setup.ts"],
     collectCoverage: false,

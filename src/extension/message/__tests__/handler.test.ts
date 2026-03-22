@@ -39,6 +39,7 @@ describe("MessageToExtensionHandlerImpl", () => {
     mockViewedStateStore = {
       toggleViewedState: jest.fn(),
       getViewedState: jest.fn(),
+      clearViewedState: jest.fn(),
     } as unknown as jest.Mocked<ViewedStateStore>;
 
     // Create mock post message function
@@ -49,6 +50,7 @@ describe("MessageToExtensionHandlerImpl", () => {
       diffDocument: mockDiffDocument,
       viewedStateStore: mockViewedStateStore,
       postMessageToWebviewFn: mockPostMessageToWebviewFn,
+      onWebviewActionRequested: jest.fn(),
     });
   });
 
@@ -88,25 +90,19 @@ describe("MessageToExtensionHandlerImpl", () => {
 
     it("should open file when file exists in workspace", async () => {
       const payload = { path: "relative/path/test.ts" };
-      const mockWorkspaceFolder = { uri: { fsPath: "/workspace" } } as vscode.WorkspaceFolder;
+      const mockWorkspaceFolder = { uri: { fsPath: "/workspace", path: "/workspace" } } as vscode.WorkspaceFolder;
 
-      // First call (absolute path) fails, second call (workspace path) succeeds
-      (vscode.workspace.fs.stat as jest.Mock)
-        .mockRejectedValueOnce(new Error("File not found")) // Absolute path fails
-        .mockResolvedValueOnce({}); // Workspace path succeeds
+      const workspaceUri = { fsPath: "/workspace/relative/path/test.ts", path: "/workspace/relative/path/test.ts" };
+
+      (vscode.workspace.fs.stat as jest.Mock).mockResolvedValueOnce({}); // Workspace path succeeds
 
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(mockWorkspaceFolder);
-      (vscode.Uri.file as jest.Mock).mockReturnValueOnce(mockUri);
-
-      // Mock path.join to return the expected path
-      const path = require("path");
-      (path.join as jest.Mock).mockReturnValue("/workspace/relative/path/test.ts");
+      (vscode.Uri.joinPath as jest.Mock).mockReturnValue(workspaceUri);
 
       await handler.openFile(payload);
 
-      expect(path.join).toHaveBeenCalledWith("/workspace", "relative/path/test.ts");
-      expect(vscode.Uri.file).toHaveBeenCalledWith("/workspace/relative/path/test.ts");
-      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.open", mockUri, {});
+      expect(vscode.Uri.joinPath).toHaveBeenCalledWith(mockWorkspaceFolder.uri, "relative", "path", "test.ts");
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.open", workspaceUri, {});
     });
 
     it("should show warning when file does not exist", async () => {
@@ -117,32 +113,35 @@ describe("MessageToExtensionHandlerImpl", () => {
 
       await handler.openFile(payload);
 
-      expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-        'Cannot locate the file "test.ts" neither in the workspace nor by the specified path.',
-      );
+      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
       expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
     });
 
     it("should handle file not found in workspace but found by absolute path", async () => {
       const payload = { path: "relative/test.ts" };
-      const mockWorkspaceFolder = { uri: { fsPath: "/workspace" } } as vscode.WorkspaceFolder;
+      const mockWorkspaceFolder = { uri: { fsPath: "/workspace", path: "/workspace" } } as vscode.WorkspaceFolder;
+      const workspaceUri = { fsPath: "/workspace/relative/test.ts", path: "/workspace/relative/test.ts" };
 
-      // First call (absolute path) fails
-      (vscode.workspace.fs.stat as jest.Mock)
-        .mockRejectedValueOnce(new Error("File not found"))
-        .mockResolvedValueOnce({}); // Second call (workspace path) succeeds
+      (vscode.workspace.fs.stat as jest.Mock).mockResolvedValueOnce({});
 
       (vscode.workspace.getWorkspaceFolder as jest.Mock).mockReturnValue(mockWorkspaceFolder);
-      (vscode.Uri.file as jest.Mock).mockReturnValue(mockUri);
+      (vscode.Uri.joinPath as jest.Mock).mockReturnValue(workspaceUri);
 
       await handler.openFile(payload);
 
-      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.open", mockUri, {});
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.open", workspaceUri, {});
     });
 
     it("should handle custom virtual file system workspace", async () => {
       const payload = { path: "test.ts" };
-      const mockWorkspaceFolder = { uri: { fsPath: "/workspace" } } as vscode.WorkspaceFolder;
+      const mockWorkspaceFolder = {
+        uri: { fsPath: "/workspace", path: "/workspace", scheme: "vscode-vfs" },
+      } as vscode.WorkspaceFolder;
+      const workspaceUri = {
+        fsPath: "/workspace/test.ts",
+        path: "/workspace/test.ts",
+        scheme: "vscode-vfs",
+      };
 
       // Mock workspace schemes
       const mockWorkspaceFolders = [
@@ -160,7 +159,7 @@ describe("MessageToExtensionHandlerImpl", () => {
         .mockReturnValueOnce(mockWorkspaceFolder); // VFS URI
 
       (vscode.workspace.fs.stat as jest.Mock).mockResolvedValue({});
-      (vscode.Uri.file as jest.Mock).mockReturnValue(mockUri);
+      (vscode.Uri.joinPath as jest.Mock).mockReturnValue(workspaceUri);
 
       // Mock the with method to return a modified URI
       (mockDiffDocument.uri.with as jest.Mock).mockReturnValue({
@@ -170,7 +169,7 @@ describe("MessageToExtensionHandlerImpl", () => {
 
       await handler.openFile(payload);
 
-      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.open", mockUri, {});
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.open", workspaceUri, {});
     });
 
     it("should not include line selection when line is not provided", async () => {
@@ -201,6 +200,22 @@ describe("MessageToExtensionHandlerImpl", () => {
     });
   });
 
+  describe("requestWebviewAction", () => {
+    it("should forward the requested action to the provider callback", () => {
+      const onWebviewActionRequested = jest.fn();
+      handler = new MessageToExtensionHandlerImpl({
+        diffDocument: mockDiffDocument,
+        viewedStateStore: mockViewedStateStore,
+        postMessageToWebviewFn: mockPostMessageToWebviewFn,
+        onWebviewActionRequested,
+      });
+
+      handler.requestWebviewAction({ action: "expandAll" });
+
+      expect(onWebviewActionRequested).toHaveBeenCalledWith("expandAll");
+    });
+  });
+
   describe("onMessageReceived", () => {
     it("should route pong message correctly", () => {
       const pongSpy = jest.spyOn(handler, "pong");
@@ -226,6 +241,15 @@ describe("MessageToExtensionHandlerImpl", () => {
       handler.onMessageReceived({ kind: "toggleFileViewed", payload });
 
       expect(toggleSpy).toHaveBeenCalledWith(payload);
+    });
+
+    it("should route requestWebviewAction message correctly", () => {
+      const actionSpy = jest.spyOn(handler, "requestWebviewAction");
+      const payload = { action: "collapseAll" as const };
+
+      handler.onMessageReceived({ kind: "requestWebviewAction", payload });
+
+      expect(actionSpy).toHaveBeenCalledWith(payload);
     });
 
     it("should throw error for unknown message kind", () => {
@@ -257,7 +281,7 @@ describe("MessageToExtensionHandlerImpl", () => {
       await handler.openFile(payload);
 
       expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-        'Cannot locate the file "test.ts" neither in the workspace nor by the specified path.',
+        'Cannot locate the file "test.ts" in the workspace or at the specified path.',
       );
     });
   });

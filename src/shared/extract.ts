@@ -4,6 +4,6 @@ export function extractNumberFromString(str: string): number | undefined {
 }
 
 export function extractNewFileNameFromDiffName(diffName: string): string {
-  const renamedFileNameRegex = /\{\S+ → (\S+)\}/gu;
-  return diffName.replace(renamedFileNameRegex, "$1");
+  const renamedFileNameRegex = /\{([^{}]+?) → ([^{}]+?)\}/gu;
+  return diffName.replaceAll(renamedFileNameRegex, "$2");
 }

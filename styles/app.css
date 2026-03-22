@@ -27,20 +27,19 @@ body {
   height: 100%;
   background-color: var(--diff-viewer--background) !important;
   color: var(--diff-viewer--foreground) !important;
-  padding: 1px;
   display: flex;
   flex-direction: column;
   scrollbar-gutter: stable;
 }
 
-body * {
+body {
   font-size: var(--vscode-editor-font-size);
   line-height: 1.4;
 }
 
 body footer {
   position: sticky;
-  bottom: 0px;
+  bottom: 0;
   padding: 6px 8px 4px 8px;
   border-top: 1px solid var(--diff-viewer--border);
   margin-top: auto;
@@ -49,7 +48,19 @@ body footer {
   align-items: center;
   justify-content: flex-end;
   background-color: var(--diff-viewer--background) !important;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
   z-index: 1;
+}
+
+#large-diff-notice-container {
+  display: none;
+  padding: 8px;
+  border-bottom: 1px solid var(--diff-viewer--border);
+  background: var(--diff-viewer--selection);
+  color: var(--diff-viewer--foreground);
+  flex: 0 0 auto;
 }
 
 #viewed-indicator {
@@ -62,50 +73,98 @@ body footer {
   width: 128px;
   margin-right: 8px;
   border-radius: 3px;
+  border: none;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
   background: var(--diff-viewer--highlight);
 }
 
-#viewed-progress {
-  height: 100%;
-  width: 0;
+#viewed-progress-container::-webkit-progress-bar {
+  background: var(--diff-viewer--highlight);
   border-radius: 3px;
+}
+
+#viewed-progress-container::-webkit-progress-value {
   background: var(--diff-viewer--primary);
+  border-radius: 3px;
   transition: width 0.4s ease;
 }
 
-#mark-all-viewed-container {
-  user-select: none;
+#viewed-progress-container::-moz-progress-bar {
+  background: var(--diff-viewer--primary);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/*
+ * Keep syntax highlighting colors, but let diff2html control the diff row background.
+ * Otherwise highlight.js paints token-sized blocks over inserted/deleted rows.
+ */
+.d2h-code-line-ctn.hljs,
+.d2h-code-line-ctn .hljs-addition,
+.d2h-code-line-ctn .hljs-deletion {
+  background: transparent !important;
+}
+
+.selected-file .d2h-file-header {
+  outline: 2px solid var(--diff-viewer--primary);
+  outline-offset: -1px;
+}
+
+.d2h-file-header {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.d2h-file-header > span {
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.d2h-file-collapse {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.diff-viewer-file-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+  justify-content: flex-end;
+}
+
+.diff-viewer-file-action-button {
   border: 1px solid var(--diff-viewer--border);
   border-radius: 3px;
+  background: transparent;
+  color: var(--diff-viewer--foreground);
   cursor: pointer;
-  font-size: smaller;
-  justify-content: flex-end;
-  padding: 2px 6px;
+  padding: 2px 8px;
+  white-space: nowrap;
 }
 
-.selected {
-  background-color: var(--diff-viewer--selection);
+.diff-viewer-file-action-button:hover {
+  background: var(--diff-viewer--selection);
 }
 
-/* showing "Changed since last view" message */
-label.d2h-file-collapse {
-  position: relative;
-}
-
-body input.changed-since-last-view:before {
+label.d2h-file-collapse.changed-since-last-view::after {
   content: "Changed since last view";
-  white-space: pre;
-  position: absolute;
-  bottom: 100%;
-  right: -0.5em;
-  padding: 0.25em 0.5em;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.2em 0.65em;
   border-radius: 1em;
   border: solid thin var(--diff-viewer--secondary);
   background: var(--diff-viewer--background);
   color: var(--diff-viewer--secondary);
-  font-size: 90%;
+  font-size: 85%;
 }
 
 #loading-container,
@@ -126,6 +185,7 @@ body input.changed-since-last-view:before {
   position: absolute;
   top: 50%;
   left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
   z-index: 100;
 }

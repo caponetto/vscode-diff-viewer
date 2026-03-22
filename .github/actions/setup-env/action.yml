@@ -13,15 +13,21 @@ runs:
     - name: "Bootstrap"
       shell: bash
       run: |
-        npm install
+        npm ci
 
     - name: "Check :: lock"
+      if: runner.os == 'Linux'
       shell: bash
-      run: |
-        git diff package-lock.json;
-        [ "0" == "$(git diff package-lock.json | wc -l | tr -d ' ')" ]
+      run: git diff --exit-code -- package-lock.json
 
     - name: "Check :: format"
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         npm run format:check
+
+    - name: "Install :: Playwright Chromium"
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        npx playwright install --with-deps chromium

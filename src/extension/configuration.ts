@@ -19,12 +19,13 @@ const requiredConfigSections = {
 type RequiredConfigIds = (typeof requiredConfigSections)[keyof typeof requiredConfigSections];
 
 export type RequiredDiff2HtmlConfig = Required<Pick<Diff2HtmlConfig, RequiredConfigIds>>;
+export type ColorSchemeSetting = ColorSchemeType | "auto";
 
 export type AppConfig = { diff2html: RequiredDiff2HtmlConfig };
 
 const DEFAULT_CONFIG: AppConfig = {
   diff2html: {
-    outputFormat: "side-by-side",
+    outputFormat: "line-by-line",
     drawFileList: true,
     matching: "none",
     matchWordsThreshold: 0.25,
@@ -37,42 +38,64 @@ const DEFAULT_CONFIG: AppConfig = {
 };
 
 export function extractConfig(): AppConfig {
+  const config = vscode.workspace.getConfiguration(APP_CONFIG_SECTION);
+  const configuredColorScheme = getColorSchemeSetting(config);
+
   return {
     diff2html: {
-      outputFormat: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<OutputFormatType>(requiredConfigSections.outputFormat, DEFAULT_CONFIG.diff2html.outputFormat),
-      drawFileList: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<boolean>(requiredConfigSections.drawFileList, DEFAULT_CONFIG.diff2html.drawFileList),
-      matching: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<LineMatchingType>(requiredConfigSections.matching, DEFAULT_CONFIG.diff2html.matching),
-      matchWordsThreshold: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<number>(requiredConfigSections.matchWordsThreshold, DEFAULT_CONFIG.diff2html.matchWordsThreshold),
-      matchingMaxComparisons: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<number>(requiredConfigSections.matchingMaxComparisons, DEFAULT_CONFIG.diff2html.matchingMaxComparisons),
-      maxLineSizeInBlockForComparison: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<number>(
-          requiredConfigSections.maxLineSizeInBlockForComparison,
-          DEFAULT_CONFIG.diff2html.maxLineSizeInBlockForComparison,
-        ),
-      maxLineLengthHighlight: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<number>(requiredConfigSections.maxLineLengthHighlight, DEFAULT_CONFIG.diff2html.maxLineLengthHighlight),
-      renderNothingWhenEmpty: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<boolean>(requiredConfigSections.renderNothingWhenEmpty, DEFAULT_CONFIG.diff2html.renderNothingWhenEmpty),
-      colorScheme: vscode.workspace
-        .getConfiguration(APP_CONFIG_SECTION)
-        .get<ColorSchemeType>(requiredConfigSections.colorScheme, DEFAULT_CONFIG.diff2html.colorScheme),
+      outputFormat: config.get<OutputFormatType>(
+        requiredConfigSections.outputFormat,
+        DEFAULT_CONFIG.diff2html.outputFormat,
+      ),
+      drawFileList: config.get<boolean>(requiredConfigSections.drawFileList, DEFAULT_CONFIG.diff2html.drawFileList),
+      matching: config.get<LineMatchingType>(requiredConfigSections.matching, DEFAULT_CONFIG.diff2html.matching),
+      matchWordsThreshold: config.get<number>(
+        requiredConfigSections.matchWordsThreshold,
+        DEFAULT_CONFIG.diff2html.matchWordsThreshold,
+      ),
+      matchingMaxComparisons: config.get<number>(
+        requiredConfigSections.matchingMaxComparisons,
+        DEFAULT_CONFIG.diff2html.matchingMaxComparisons,
+      ),
+      maxLineSizeInBlockForComparison: config.get<number>(
+        requiredConfigSections.maxLineSizeInBlockForComparison,
+        DEFAULT_CONFIG.diff2html.maxLineSizeInBlockForComparison,
+      ),
+      maxLineLengthHighlight: config.get<number>(
+        requiredConfigSections.maxLineLengthHighlight,
+        DEFAULT_CONFIG.diff2html.maxLineLengthHighlight,
+      ),
+      renderNothingWhenEmpty: config.get<boolean>(
+        requiredConfigSections.renderNothingWhenEmpty,
+        DEFAULT_CONFIG.diff2html.renderNothingWhenEmpty,
+      ),
+      colorScheme: resolveColorScheme(configuredColorScheme),
     },
   };
 }
 
+export function isAutoColorScheme(): boolean {
+  return getColorSchemeSetting(vscode.workspace.getConfiguration(APP_CONFIG_SECTION)) === "auto";
+}
+
 export function setOutputFormatConfig(value: OutputFormatType): Thenable<void> {
   return vscode.workspace.getConfiguration(APP_CONFIG_SECTION).update(requiredConfigSections.outputFormat, value, true);
+}
+
+function getColorSchemeSetting(config: vscode.WorkspaceConfiguration): ColorSchemeSetting {
+  return config.get<ColorSchemeSetting>(requiredConfigSections.colorScheme, "auto");
+}
+
+function resolveColorScheme(setting: ColorSchemeSetting): ColorSchemeType {
+  if (setting !== "auto") {
+    return setting;
+  }
+
+  switch (vscode.window.activeColorTheme.kind) {
+    case vscode.ColorThemeKind.Dark:
+    case vscode.ColorThemeKind.HighContrast:
+      return ColorSchemeType.DARK;
+    default:
+      return ColorSchemeType.LIGHT;
+  }
 }
