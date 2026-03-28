@@ -32,6 +32,7 @@ export function createRenderPlan(args: {
     },
     config: forcedLineByLine
       ? {
+          ...args.requestedConfig,
           diff2html: {
             ...args.requestedConfig.diff2html,
             outputFormat: "line-by-line",

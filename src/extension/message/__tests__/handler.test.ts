@@ -5,7 +5,6 @@ import { ViewedStateStore } from "../../viewed-state";
 describe("MessageToExtensionHandlerImpl", () => {
   let mockDiffDocument: vscode.TextDocument;
   let mockViewedStateStore: jest.Mocked<ViewedStateStore>;
-  let mockPostMessageToWebviewFn: jest.Mock;
   let handler: MessageToExtensionHandlerImpl;
 
   beforeEach(() => {
@@ -42,21 +41,27 @@ describe("MessageToExtensionHandlerImpl", () => {
       clearViewedState: jest.fn(),
     } as unknown as jest.Mocked<ViewedStateStore>;
 
-    // Create mock post message function
-    mockPostMessageToWebviewFn = jest.fn();
-
     // Create handler instance
     handler = new MessageToExtensionHandlerImpl({
       diffDocument: mockDiffDocument,
       viewedStateStore: mockViewedStateStore,
-      postMessageToWebviewFn: mockPostMessageToWebviewFn,
       onWebviewActionRequested: jest.fn(),
     });
   });
 
-  describe("pong", () => {
-    it("should execute without throwing", () => {
-      expect(() => handler.pong()).not.toThrow();
+  describe("ready", () => {
+    it("should forward the ready payload to the callback when provided", () => {
+      const onReadyReceived = jest.fn();
+      handler = new MessageToExtensionHandlerImpl({
+        diffDocument: mockDiffDocument,
+        viewedStateStore: mockViewedStateStore,
+        onWebviewActionRequested: jest.fn(),
+        onReadyReceived,
+      });
+
+      handler.ready({ shellGeneration: 2 });
+
+      expect(onReadyReceived).toHaveBeenCalledWith({ shellGeneration: 2 });
     });
   });
 
@@ -206,7 +211,6 @@ describe("MessageToExtensionHandlerImpl", () => {
       handler = new MessageToExtensionHandlerImpl({
         diffDocument: mockDiffDocument,
         viewedStateStore: mockViewedStateStore,
-        postMessageToWebviewFn: mockPostMessageToWebviewFn,
         onWebviewActionRequested,
       });
 
@@ -217,12 +221,13 @@ describe("MessageToExtensionHandlerImpl", () => {
   });
 
   describe("onMessageReceived", () => {
-    it("should route pong message correctly", () => {
-      const pongSpy = jest.spyOn(handler, "pong");
+    it("should route ready message correctly", () => {
+      const readySpy = jest.spyOn(handler, "ready");
+      const payload = { shellGeneration: 2 };
 
-      handler.onMessageReceived({ kind: "pong" });
+      handler.onMessageReceived({ kind: "ready", payload });
 
-      expect(pongSpy).toHaveBeenCalled();
+      expect(readySpy).toHaveBeenCalledWith(payload);
     });
 
     it("should route openFile message correctly", async () => {
@@ -306,16 +311,16 @@ describe("MessageToExtensionHandlerImpl", () => {
     });
 
     it("should handle message routing for all supported message types", () => {
-      const pongSpy = jest.spyOn(handler, "pong");
+      const readySpy = jest.spyOn(handler, "ready");
       const openFileSpy = jest.spyOn(handler, "openFile").mockResolvedValue();
       const toggleSpy = jest.spyOn(handler, "toggleFileViewed");
 
       // Test all message types
-      handler.onMessageReceived({ kind: "pong" });
+      handler.onMessageReceived({ kind: "ready", payload: { shellGeneration: 1 } });
       handler.onMessageReceived({ kind: "openFile", payload: { path: "test.ts" } });
       handler.onMessageReceived({ kind: "toggleFileViewed", payload: { path: "test.ts", viewedSha1: "abc" } });
 
-      expect(pongSpy).toHaveBeenCalledTimes(1);
+      expect(readySpy).toHaveBeenCalledTimes(1);
       expect(openFileSpy).toHaveBeenCalledTimes(1);
       expect(toggleSpy).toHaveBeenCalledTimes(1);
     });

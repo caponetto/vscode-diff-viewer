@@ -119,6 +119,11 @@
             ],
             "markdownDescription": "Layout used to render the diff."
           },
+          "diffviewer.globalScrollbar": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "Show a sticky horizontal scrollbar below the viewed summary for wide diffs."
+          },
           "diffviewer.drawFileList": {
             "type": "boolean",
             "default": true,

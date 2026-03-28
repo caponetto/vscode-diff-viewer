@@ -66,6 +66,7 @@ const createMockDiffFile = (args: Partial<DiffFile> & Pick<DiffFile, "newName" |
   }) as DiffFile;
 
 const createConfig = (): AppConfig => ({
+  globalScrollbar: false,
   diff2html: {
     outputFormat: "side-by-side",
     drawFileList: true,
@@ -101,10 +102,26 @@ const renderSkeleton = (): void => {
     <link id="${SkeletonElementIds.HighlightDarkStylesheet}" rel="stylesheet" />
     <div id="${SkeletonElementIds.DiffContainer}"></div>
     <footer>
-      <span id="${SkeletonElementIds.ViewedIndicator}"></span>
-      <progress id="${SkeletonElementIds.ViewedProgressContainer}" max="100" value="0"></progress>
+      <div id="${SkeletonElementIds.FooterStatus}">
+        <span id="${SkeletonElementIds.ViewedIndicator}"></span>
+        <progress id="${SkeletonElementIds.ViewedProgressContainer}" max="100" value="0"></progress>
+      </div>
+      <div id="${SkeletonElementIds.HorizontalScrollbarContainer}">
+        <div id="${SkeletonElementIds.HorizontalScrollbarContent}"></div>
+      </div>
     </footer>
   `;
+};
+
+const setElementDimensions = (element: HTMLElement, dimensions: { clientWidth: number; scrollWidth: number }): void => {
+  Object.defineProperty(element, "clientWidth", {
+    configurable: true,
+    value: dimensions.clientWidth,
+  });
+  Object.defineProperty(element, "scrollWidth", {
+    configurable: true,
+    value: dimensions.scrollWidth,
+  });
 };
 
 describe("MessageToWebviewHandlerImpl", () => {
@@ -235,6 +252,42 @@ describe("MessageToWebviewHandlerImpl", () => {
     );
 
     expect(Diff2HtmlUI).toHaveBeenCalled();
+  });
+
+  it("hides the sticky horizontal scrollbar when the last expanded file is collapsed and the page does not overflow", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        config: {
+          ...createConfig(),
+          globalScrollbar: true,
+        },
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+      }),
+    );
+
+    const sideDiffs = Array.from(document.querySelectorAll<HTMLElement>(".d2h-file-side-diff"));
+    sideDiffs.forEach((element) => setElementDimensions(element, { clientWidth: 120, scrollWidth: 420 }));
+
+    const scrollbar = document.getElementById(SkeletonElementIds.HorizontalScrollbarContainer) as HTMLDivElement;
+    globalThis.dispatchEvent(new Event("resize"));
+    expect(scrollbar.style.display).toBe("block");
+
+    const root = document.documentElement;
+    Object.defineProperty(document, "scrollingElement", {
+      configurable: true,
+      value: root,
+    });
+    setElementDimensions(root, { clientWidth: 200, scrollWidth: 200 });
+
+    const viewedToggle = document.querySelector<HTMLInputElement>(".d2h-file-collapse-input");
+    expect(viewedToggle).toBeTruthy();
+    if (viewedToggle) {
+      viewedToggle.checked = true;
+      viewedToggle.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    expect(scrollbar.style.display).toBe("none");
   });
 
   it("returns early when the diff container is missing", async () => {

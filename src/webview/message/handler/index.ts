@@ -11,6 +11,7 @@ import { Diff2HtmlCssClassElements } from "../../css/elements";
 import { UpdateWebviewPayload, WebviewAction, WebviewUiState } from "../api";
 import { getSha1Hash } from "../hash";
 import { buildDiffFileMap, buildDiffFileViewModel, buildDiffHashes } from "./models";
+import { HorizontalScrollbarController } from "./scrollbar";
 import {
   CHANGED_SINCE_VIEWED,
   DEFAULT_UI_STATE,
@@ -31,6 +32,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
   private currentDiffFilesByPath: Record<string, DiffFile> = {};
   private fileBindings: FileDomBinding[] = [];
   private diffContainerHandlersRegistered = false;
+  private readonly horizontalScrollbarController: HorizontalScrollbarController;
 
   constructor(
     private readonly args: {
@@ -43,15 +45,15 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       ...DEFAULT_UI_STATE,
       ...this.args.state.getState(),
     };
+    this.horizontalScrollbarController = new HorizontalScrollbarController({
+      getConfig: () => this.currentConfig,
+      getFileBindings: () => this.fileBindings,
+    });
   }
 
   public prepare(): void {
     showLoading(true);
     showEmpty(false);
-  }
-
-  public ping(): void {
-    this.args.postMessageToExtensionFn({ kind: "pong" });
   }
 
   public async updateWebview(payload: UpdateWebviewPayload): Promise<void> {
@@ -88,6 +90,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
 
       this.fileBindings = this.enhanceRenderedDiff(diffContainer, payload.diffFiles);
       this.registerDiffContainerHandlers(diffContainer);
+      this.horizontalScrollbarController.ensureWindowHandlersRegistered();
 
       if (payload.collapseAll) {
         if (payload.performance.isLargeDiff) {
@@ -103,6 +106,8 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       updateFooter(this.fileBindings);
 
       diffContainer.style.display = "block";
+      this.horizontalScrollbarController.refresh();
+      this.horizontalScrollbarController.scheduleRefresh();
     });
   }
 
@@ -112,12 +117,14 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
         this.setAllViewedStates(true);
         this.clearChangedSinceViewedIndicators();
         updateFooter(this.fileBindings);
+        this.horizontalScrollbarController.refresh();
         return;
       case "expandAll":
         this.setAllViewedStates(false);
         this.clearChangedSinceViewedIndicators();
         this.persistUiState({ selectedPath: undefined });
         updateFooter(this.fileBindings);
+        this.horizontalScrollbarController.refresh();
         return;
       case "showRaw":
         return;
@@ -134,6 +141,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
 
     this.diffContainerHandlersRegistered = true;
   }
+
   private onDiffContainerChangedHandler(event: Event): void {
     const viewedToggle = event.target;
     if (!(viewedToggle instanceof HTMLInputElement)) {
@@ -148,11 +156,13 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
   }
 
   private onViewedToggleChangedHandler(viewedToggle: HTMLInputElement): void {
+    this.updateDiff2HtmlFileCollapsed(viewedToggle, viewedToggle.checked);
     viewedToggle.classList.remove(CHANGED_SINCE_VIEWED);
     this.getViewedToggleLabel(viewedToggle)?.classList.remove(CHANGED_SINCE_VIEWED);
     this.scrollDiffFileHeaderIntoView(viewedToggle);
     this.selectDiffFile(this.getDiffElementFileName(viewedToggle));
     updateFooter(this.fileBindings);
+    this.horizontalScrollbarController.refresh();
     void this.sendFileViewedMessage(viewedToggle, viewedToggle.checked);
   }
 
@@ -411,6 +421,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     });
 
     if (!path) {
+      this.persistUiState({ selectedPath: undefined });
       return;
     }
 
@@ -429,10 +440,6 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       ...patch,
     };
     this.args.state.setState(this.currentUiState);
-  }
-
-  private getAllFileBindings(): FileDomBinding[] {
-    return this.fileBindings;
   }
 
   private scrollDiffFileHeaderIntoView(viewedToggle: HTMLInputElement): void {

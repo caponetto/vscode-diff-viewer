@@ -18,6 +18,8 @@ export function ensureWebviewShell(args: {
     return;
   }
 
+  args.webviewContext.shellGeneration += 1;
+
   const webviewUri = args.webviewContext.panel.webview.asWebviewUri(
     vscode.Uri.joinPath(args.providerArgs.extensionContext.extensionUri, args.providerArgs.webviewPath),
   );
@@ -31,6 +33,7 @@ export function ensureWebviewShell(args: {
     darkHighlightCssUri: cssUris.darkHighlightCssUri,
     cspSource: args.webviewContext.panel.webview.cspSource,
     nonce,
+    shellGeneration: args.webviewContext.shellGeneration,
   });
   args.webviewContext.shellInitialized = true;
 }

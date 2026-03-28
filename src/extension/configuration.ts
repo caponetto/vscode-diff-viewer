@@ -15,15 +15,22 @@ const requiredConfigSections = {
   renderNothingWhenEmpty: "renderNothingWhenEmpty",
   colorScheme: "colorScheme",
 } as const;
+const appConfigSections = {
+  globalScrollbar: "globalScrollbar",
+} as const;
 
 type RequiredConfigIds = (typeof requiredConfigSections)[keyof typeof requiredConfigSections];
 
 export type RequiredDiff2HtmlConfig = Required<Pick<Diff2HtmlConfig, RequiredConfigIds>>;
 export type ColorSchemeSetting = ColorSchemeType | "auto";
 
-export type AppConfig = { diff2html: RequiredDiff2HtmlConfig };
+export type AppConfig = {
+  diff2html: RequiredDiff2HtmlConfig;
+  globalScrollbar: boolean;
+};
 
 const DEFAULT_CONFIG: AppConfig = {
+  globalScrollbar: false,
   diff2html: {
     outputFormat: "line-by-line",
     drawFileList: true,
@@ -42,6 +49,7 @@ export function extractConfig(): AppConfig {
   const configuredColorScheme = getColorSchemeSetting(config);
 
   return {
+    globalScrollbar: config.get<boolean>(appConfigSections.globalScrollbar, DEFAULT_CONFIG.globalScrollbar),
     diff2html: {
       outputFormat: config.get<OutputFormatType>(
         requiredConfigSections.outputFormat,

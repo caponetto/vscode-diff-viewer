@@ -33,6 +33,10 @@ describe("webview/index", () => {
       value: jest.fn(() => ({ postMessage, getState, setState })),
       configurable: true,
     });
+    Object.defineProperty(document, "body", {
+      value: { dataset: { shellGeneration: "7" } },
+      configurable: true,
+    });
   });
 
   it("wires the webview API into the message handler", async () => {
@@ -55,9 +59,11 @@ describe("webview/index", () => {
       },
     });
 
+    expect(postMessage).toHaveBeenCalledWith({ kind: "ready", payload: { shellGeneration: 7 } });
+
     const args = mockedHandlerConstructor!.mock.calls[0]?.[0];
-    args?.postMessageToExtensionFn({ kind: "pong" } as never);
-    expect(postMessage).toHaveBeenCalledWith({ kind: "pong" });
+    args?.postMessageToExtensionFn({ kind: "requestWebviewAction", payload: { action: "expandAll" } } as never);
+    expect(postMessage).toHaveBeenCalledWith({ kind: "requestWebviewAction", payload: { action: "expandAll" } });
     expect(args?.state.getState()).toEqual({ scrollTop: 10 });
     args?.state.setState({ scrollTop: 99 });
     expect(setState).toHaveBeenCalledWith({ scrollTop: 99 });
@@ -78,7 +84,7 @@ describe("webview/index", () => {
     mockedIsMessageToWebview!.mockReturnValue(true);
     messageCallback({
       origin: "http://different-host",
-      data: { kind: "ping" },
+      data: { kind: "prepare" },
     } as MessageEvent);
 
     expect(onMessageReceived).not.toHaveBeenCalled();
@@ -125,10 +131,10 @@ describe("webview/index", () => {
     expect(() =>
       messageCallback({
         origin: "http://localhost",
-        data: { kind: "ping" },
+        data: { kind: "prepare" },
       } as MessageEvent),
     ).not.toThrow();
 
-    expect(onMessageReceived).toHaveBeenCalledWith({ kind: "ping" });
+    expect(onMessageReceived).toHaveBeenCalledWith({ kind: "prepare" });
   });
 });

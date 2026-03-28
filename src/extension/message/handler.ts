@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { MessageToExtensionHandler, MessageToWebview } from "../../shared/message";
+import { MessageToExtensionHandler } from "../../shared/message";
 import { GenericMessageHandlerImpl } from "../../shared/message-handler";
 import { getPathBaseName } from "../../shared/path";
 import { ViewedStateStore } from "../viewed-state";
@@ -11,15 +11,15 @@ export class MessageToExtensionHandlerImpl extends GenericMessageHandlerImpl imp
     private readonly args: {
       diffDocument: vscode.TextDocument;
       viewedStateStore: ViewedStateStore;
-      postMessageToWebviewFn: (message: MessageToWebview) => void;
       onWebviewActionRequested: (action: WebviewAction) => void;
+      onReadyReceived?: (payload: { shellGeneration: number }) => void;
     },
   ) {
     super();
   }
 
-  public pong(): void {
-    // console.debug("Extension pong!");
+  public ready(payload: { shellGeneration: number }): void {
+    this.args.onReadyReceived?.(payload);
   }
 
   public async openFile(payload: { path: string; line?: number }): Promise<void> {

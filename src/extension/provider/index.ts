@@ -52,13 +52,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       return;
     }
 
-    this.postMessageToWebviewWrapper({
-      webview: webviewPanel.webview,
-      message: {
-        kind: "ping",
-      },
-    });
-
     webviewPanel.webview.options = {
       enableScripts: true,
     };
@@ -142,13 +135,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
         this.updateWebview(args.webviewContext);
       }),
-      vscode.window.tabGroups.onDidChangeTabs(() => {
-        if (args.webviewContext.isDisposed) {
-          return;
-        }
-
-        this.updateWebview(args.webviewContext);
-      }),
       args.webviewContext.panel.onDidChangeViewState((event: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
         if (event.webviewPanel.active) {
           this.activeWebviewContext = args.webviewContext;
@@ -187,6 +173,8 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       isDisposed: false,
       renderRequestId: 0,
       shellInitialized: false,
+      shellGeneration: 0,
+      webviewReady: false,
     };
   }
 
@@ -199,11 +187,11 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     return new MessageToExtensionHandlerImpl({
       diffDocument: args.diffDocument,
       viewedStateStore: args.viewedStateStore,
-      postMessageToWebviewFn: (message: MessageToWebview) => {
-        this.postMessageToWebviewWrapper({ webview: args.webviewPanel.webview, message });
-      },
       onWebviewActionRequested: (action) => {
         this.performWebviewAction(action, args.webviewContext);
+      },
+      onReadyReceived: (payload) => {
+        this.onWebviewReady(args.webviewContext, payload);
       },
     });
   }
@@ -214,14 +202,23 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       clearTimeout(webviewContext.pendingRender);
     }
 
-    this.prepareWebviewForRender(webviewContext);
-
     const config = extractConfig();
     webviewContext.lastRenderedColorScheme = config.diff2html.colorScheme;
+    if (!webviewContext.shellInitialized) {
+      webviewContext.webviewReady = false;
+    }
     ensureWebviewShell({
       providerArgs: this.args,
       webviewContext,
     });
+
+    if (!webviewContext.webviewReady) {
+      webviewContext.pendingReadyRender = { collapseAll };
+      return;
+    }
+
+    webviewContext.pendingReadyRender = undefined;
+    this.prepareWebviewForRender(webviewContext);
 
     webviewContext.pendingRender = setTimeout(() => {
       void this.renderWebview({
@@ -337,6 +334,25 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
 
   private postMessageToWebviewWrapper(args: { webview: vscode.Webview; message: MessageToWebview }): void {
     args.webview.postMessage(args.message);
+  }
+
+  private onWebviewReady(webviewContext: WebviewContext, payload: { shellGeneration: number }): void {
+    if (payload.shellGeneration !== webviewContext.shellGeneration) {
+      return;
+    }
+
+    webviewContext.webviewReady = true;
+
+    const pendingReadyRender = webviewContext.pendingReadyRender;
+    if (pendingReadyRender) {
+      webviewContext.pendingReadyRender = undefined;
+      this.updateWebview(webviewContext, pendingReadyRender.collapseAll);
+      return;
+    }
+
+    if (webviewContext.panel.visible) {
+      this.updateWebview(webviewContext);
+    }
   }
 
   private hasThemeChanged(webviewContext: WebviewContext): boolean {
