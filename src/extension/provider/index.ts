@@ -52,12 +52,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       return;
     }
 
-    if (this.isDocumentShownInTextDiff(diffDocument.uri)) {
-      webviewPanel.dispose();
-      await vscode.commands.executeCommand("vscode.openWith", diffDocument.uri, "default");
-      return;
-    }
-
     this.postMessageToWebviewWrapper({
       webview: webviewPanel.webview,
       message: {
@@ -150,11 +144,6 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       }),
       vscode.window.tabGroups.onDidChangeTabs(() => {
         if (args.webviewContext.isDisposed) {
-          return;
-        }
-
-        if (this.isDocumentShownInTextDiff(args.webviewContext.document.uri)) {
-          this.openWithDefaultEditor(args.webviewContext);
           return;
         }
 
@@ -350,29 +339,8 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     args.webview.postMessage(args.message);
   }
 
-  private isDocumentShownInTextDiff(uri: vscode.Uri): boolean {
-    return vscode.window.tabGroups.all.some((group) =>
-      group.tabs.some((tab) => {
-        const input = tab.input;
-        return (
-          input instanceof vscode.TabInputTextDiff &&
-          (this.isSameResource(input.original, uri) || this.isSameResource(input.modified, uri))
-        );
-      }),
-    );
-  }
-
-  private isSameResource(left: vscode.Uri, right: vscode.Uri): boolean {
-    return left.toString() === right.toString();
-  }
-
   private hasThemeChanged(webviewContext: WebviewContext): boolean {
     return webviewContext.lastRenderedColorScheme !== extractConfig().diff2html.colorScheme;
-  }
-
-  private openWithDefaultEditor(webviewContext: WebviewContext): void {
-    webviewContext.panel.dispose();
-    this.openDocumentWithDefaultEditor(webviewContext.document.uri);
   }
 
   private openDocumentWithDefaultEditor(uri: vscode.Uri): void {
