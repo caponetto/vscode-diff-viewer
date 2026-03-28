@@ -192,6 +192,7 @@ describe("DiffViewerProvider", () => {
       uri: { fsPath: "/workspace", path: "/workspace", scheme: "file", with: jest.fn() },
     });
     mockExtractConfig.mockReturnValue({
+      globalScrollbar: false,
       diff2html: {
         outputFormat: "side-by-side",
         drawFileList: true,
@@ -423,12 +424,10 @@ describe("DiffViewerProvider", () => {
       expect(mockWebview.postMessage).not.toHaveBeenCalled();
     });
 
-    it("should send ping message and setup webview", async () => {
+    it("should setup webview without posting render messages before it is ready", async () => {
       await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
 
-      expect(mockWebview.postMessage).toHaveBeenCalledWith({
-        kind: "ping",
-      });
+      expect(mockWebview.postMessage).not.toHaveBeenCalled();
       expect(mockWebview.options).toEqual({
         enableScripts: true,
       });
@@ -449,8 +448,8 @@ describe("DiffViewerProvider", () => {
       expect(MessageToExtensionHandlerImpl).toHaveBeenCalledWith({
         diffDocument: mockTextDocument,
         viewedStateStore: expect.any(Object),
-        postMessageToWebviewFn: expect.any(Function),
         onWebviewActionRequested: expect.any(Function),
+        onReadyReceived: expect.any(Function),
       });
     });
 
@@ -490,6 +489,8 @@ describe("DiffViewerProvider", () => {
 
     it("should handle diff parsing and webview update", async () => {
       await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
+      const constructorArgs = jest.mocked(MessageToExtensionHandlerImpl).mock.calls.at(-1)?.[0];
+      constructorArgs?.onReadyReceived?.({ shellGeneration: 1 });
 
       // Fast-forward timers to execute setTimeout
       await jest.runAllTimersAsync();
@@ -519,6 +520,8 @@ describe("DiffViewerProvider", () => {
       mockWebviewPanel.dispose = jest.fn();
 
       await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
+      const constructorArgs = jest.mocked(MessageToExtensionHandlerImpl).mock.calls.at(-1)?.[0];
+      constructorArgs?.onReadyReceived?.({ shellGeneration: 1 });
       await jest.runAllTimersAsync();
 
       expect(mockWebviewPanel.dispose).toHaveBeenCalled();
@@ -537,6 +540,8 @@ describe("DiffViewerProvider", () => {
       (vscode.commands.executeCommand as jest.Mock) = mockExecuteCommand;
 
       await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
+      const constructorArgs = jest.mocked(MessageToExtensionHandlerImpl).mock.calls.at(-1)?.[0];
+      constructorArgs?.onReadyReceived?.({ shellGeneration: 1 });
 
       await jest.runAllTimersAsync();
 
@@ -554,6 +559,8 @@ describe("DiffViewerProvider", () => {
       mockWebviewPanel.dispose = mockDispose;
       (vscode.window.showWarningMessage as jest.Mock) = mockShowWarningMessage;
       await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
+      const constructorArgs = jest.mocked(MessageToExtensionHandlerImpl).mock.calls.at(-1)?.[0];
+      constructorArgs?.onReadyReceived?.({ shellGeneration: 1 });
 
       await jest.runAllTimersAsync();
 
@@ -597,7 +604,7 @@ describe("DiffViewerProvider", () => {
   describe("postMessageToWebviewWrapper", () => {
     it("should post message to webview", () => {
       const message: MessageToWebview = {
-        kind: "ping",
+        kind: "prepare",
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -619,7 +626,7 @@ describe("DiffViewerProvider", () => {
       jest.useRealTimers();
     });
 
-    it("should send prepare message and build skeleton", () => {
+    it("should build the shell and defer rendering until the webview is ready", () => {
       const webviewContext = {
         document: mockTextDocument,
         panel: mockWebviewPanel,
@@ -627,26 +634,34 @@ describe("DiffViewerProvider", () => {
         isDisposed: false,
         renderRequestId: 0,
         shellInitialized: false,
+        shellGeneration: 0,
+        webviewReady: false,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (provider as any).updateWebview(webviewContext);
 
-      expect(mockWebview.postMessage).toHaveBeenCalledWith({
-        kind: "prepare",
-      });
       expect(mockExtractConfig).toHaveBeenCalled();
       expect(mockBuildSkeleton).toHaveBeenCalled();
+      expect(mockWebview.postMessage).not.toHaveBeenCalled();
+      expect(
+        (webviewContext as typeof webviewContext & { pendingReadyRender?: { collapseAll: boolean } })
+          .pendingReadyRender,
+      ).toEqual({
+        collapseAll: false,
+      });
     });
 
-    it("should handle webview update after timeout", async () => {
+    it("should handle webview update after the webview is ready", async () => {
       const webviewContext = {
         document: mockTextDocument,
         panel: mockWebviewPanel,
         viewedStateStore: mockViewedStateStore,
         isDisposed: false,
         renderRequestId: 0,
-        shellInitialized: false,
+        shellInitialized: true,
+        shellGeneration: 1,
+        webviewReady: true,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -676,7 +691,9 @@ describe("DiffViewerProvider", () => {
         viewedStateStore: mockViewedStateStore,
         isDisposed: false,
         renderRequestId: 0,
-        shellInitialized: false,
+        shellInitialized: true,
+        shellGeneration: 1,
+        webviewReady: true,
       };
 
       mockTextDocument.getText = jest.fn().mockReturnValue("x".repeat(600000));
@@ -711,7 +728,9 @@ describe("DiffViewerProvider", () => {
         viewedStateStore: mockViewedStateStore,
         isDisposed: false,
         renderRequestId: 0,
-        shellInitialized: false,
+        shellInitialized: true,
+        shellGeneration: 1,
+        webviewReady: true,
       };
 
       mockParse.mockReturnValue([
@@ -769,7 +788,9 @@ describe("DiffViewerProvider", () => {
         viewedStateStore: mockViewedStateStore,
         isDisposed: false,
         renderRequestId: 0,
-        shellInitialized: false,
+        shellInitialized: true,
+        shellGeneration: 1,
+        webviewReady: true,
       };
 
       mockParse.mockImplementation(() => {
@@ -806,7 +827,9 @@ describe("DiffViewerProvider", () => {
         viewedStateStore: mockViewedStateStore,
         isDisposed: false,
         renderRequestId: 0,
-        shellInitialized: false,
+        shellInitialized: true,
+        shellGeneration: 1,
+        webviewReady: true,
       };
 
       mockParse.mockReturnValue([
@@ -843,7 +866,6 @@ describe("DiffViewerProvider", () => {
       const mockOnDidDeleteFiles = jest.fn();
       const mockOnDidRenameFiles = jest.fn();
       const mockOnDidChangeActiveColorTheme = jest.fn();
-      const mockOnDidChangeTabs = jest.fn();
 
       (vscode.workspace.onDidChangeTextDocument as jest.Mock) = mockOnDidChangeTextDocument;
       (vscode.workspace.onDidChangeConfiguration as jest.Mock) = mockOnDidChangeConfiguration;
@@ -852,7 +874,6 @@ describe("DiffViewerProvider", () => {
       (vscode.workspace.onDidDeleteFiles as jest.Mock) = mockOnDidDeleteFiles;
       (vscode.workspace.onDidRenameFiles as jest.Mock) = mockOnDidRenameFiles;
       (vscode.window.onDidChangeActiveColorTheme as jest.Mock) = mockOnDidChangeActiveColorTheme;
-      (vscode.window.tabGroups.onDidChangeTabs as jest.Mock) = mockOnDidChangeTabs;
 
       const webviewContext = {
         document: mockTextDocument,
@@ -882,7 +903,6 @@ describe("DiffViewerProvider", () => {
       expect(mockOnDidDeleteFiles).toHaveBeenCalled();
       expect(mockOnDidRenameFiles).toHaveBeenCalled();
       expect(mockOnDidChangeActiveColorTheme).toHaveBeenCalled();
-      expect(mockOnDidChangeTabs).toHaveBeenCalled();
     });
 
     it("should ignore malformed messages from the webview", () => {
@@ -1000,6 +1020,7 @@ describe("DiffViewerProvider", () => {
 
       mockIsAutoColorScheme.mockReturnValue(true);
       mockExtractConfig.mockReturnValue({
+        globalScrollbar: false,
         diff2html: {
           outputFormat: "side-by-side",
           drawFileList: true,
@@ -1265,12 +1286,28 @@ describe("DiffViewerProvider", () => {
       expect(mockUpdateWebview).toHaveBeenCalledWith(webviewContext);
     });
 
-    it("should update webview when tabs change and the document is not part of a text diff", () => {
+    it("should update the active context and rerender on visible theme-sensitive view state changes", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockUpdateWebview = jest.spyOn(provider as any, "updateWebview").mockImplementation(() => undefined);
-      const mockOnDidChangeTabs = jest.fn((callback: () => void) => {
-        callback();
+      const mockOnDidChangeViewState = jest.fn((callback: (event: { webviewPanel: vscode.WebviewPanel }) => void) => {
+        callback({ webviewPanel: { ...mockWebviewPanel, active: true, visible: true } as vscode.WebviewPanel });
         return { dispose: jest.fn() };
+      });
+
+      mockIsAutoColorScheme.mockReturnValue(true);
+      mockExtractConfig.mockReturnValue({
+        globalScrollbar: false,
+        diff2html: {
+          outputFormat: "side-by-side",
+          drawFileList: true,
+          matching: "none",
+          matchWordsThreshold: 0.25,
+          matchingMaxComparisons: 2500,
+          maxLineSizeInBlockForComparison: 200,
+          maxLineLengthHighlight: 10000,
+          renderNothingWhenEmpty: false,
+          colorScheme: ColorSchemeType.DARK,
+        },
       });
 
       (vscode.workspace.onDidChangeTextDocument as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
@@ -1280,13 +1317,16 @@ describe("DiffViewerProvider", () => {
       (vscode.workspace.onDidDeleteFiles as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
       (vscode.workspace.onDidRenameFiles as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
       (vscode.window.onDidChangeActiveColorTheme as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.window.tabGroups.onDidChangeTabs as jest.Mock) = mockOnDidChangeTabs;
       Object.defineProperty(mockWebview, "onDidReceiveMessage", {
         value: jest.fn().mockReturnValue({ dispose: jest.fn() }),
         configurable: true,
       });
       Object.defineProperty(mockWebviewPanel, "onDidDispose", {
         value: jest.fn(),
+        configurable: true,
+      });
+      Object.defineProperty(mockWebviewPanel, "onDidChangeViewState", {
+        value: mockOnDidChangeViewState,
         configurable: true,
       });
       (vscode.Disposable.from as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
@@ -1297,76 +1337,55 @@ describe("DiffViewerProvider", () => {
         viewedStateStore: mockViewedStateStore,
         isDisposed: false,
         renderRequestId: 0,
+        lastRenderedColorScheme: ColorSchemeType.LIGHT,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (provider as any).registerEventHandlers({ webviewContext, messageHandler: mockMessageHandler });
 
+      expect(Reflect.get(provider, "activeWebviewContext")).toBe(webviewContext);
       expect(mockUpdateWebview).toHaveBeenCalledWith(webviewContext);
-      expect(mockWebviewPanel.dispose).not.toHaveBeenCalled();
     });
 
-    it("should update webview when tabs change even if the document is part of a text diff", () => {
+    it("should rerender when a matching ready event arrives", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockUpdateWebview = jest.spyOn(provider as any, "updateWebview").mockImplementation(() => undefined);
-      const mockDispose = jest.fn();
-      const mockOnDidChangeTabs = jest.fn((callback: () => void) => {
-        (
-          vscode.window.tabGroups as unknown as {
-            all: Array<{ tabs: Array<{ input: unknown }> }>;
-          }
-        ).all = [
-          {
-            tabs: [
-              {
-                input: new (vscode.TabInputTextDiff as unknown as new (
-                  original: { toString: () => string },
-                  modified: { toString: () => string },
-                ) => unknown)(
-                  { toString: () => "file:///workspace/base.patch" },
-                  { toString: () => "file:///workspace/test.diff" },
-                ),
-              },
-            ],
-          },
-        ];
-        callback();
-        return { dispose: jest.fn() };
-      });
-
-      (vscode.workspace.onDidChangeTextDocument as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.workspace.onDidChangeConfiguration as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.workspace.onDidChangeWorkspaceFolders as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.workspace.onDidCreateFiles as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.workspace.onDidDeleteFiles as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.workspace.onDidRenameFiles as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.window.onDidChangeActiveColorTheme as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-      (vscode.window.tabGroups.onDidChangeTabs as jest.Mock) = mockOnDidChangeTabs;
-      Object.defineProperty(mockWebview, "onDidReceiveMessage", {
-        value: jest.fn().mockReturnValue({ dispose: jest.fn() }),
-        configurable: true,
-      });
-      Object.defineProperty(mockWebviewPanel, "onDidDispose", {
-        value: jest.fn(),
-        configurable: true,
-      });
-      mockWebviewPanel.dispose = mockDispose;
-      (vscode.Disposable.from as jest.Mock) = jest.fn().mockReturnValue({ dispose: jest.fn() });
-
       const webviewContext = {
         document: mockTextDocument,
         panel: mockWebviewPanel,
         viewedStateStore: mockViewedStateStore,
         isDisposed: false,
         renderRequestId: 0,
+        shellInitialized: true,
+        shellGeneration: 4,
+        webviewReady: false,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (provider as any).registerEventHandlers({ webviewContext, messageHandler: mockMessageHandler });
+      (provider as any).onWebviewReady(webviewContext, { shellGeneration: 4 });
 
-      expect(mockDispose).not.toHaveBeenCalled();
-      expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
       expect(mockUpdateWebview).toHaveBeenCalledWith(webviewContext);
+    });
+
+    it("should ignore ready events from stale shell generations", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const mockUpdateWebview = jest.spyOn(provider as any, "updateWebview").mockImplementation(() => undefined);
+      const webviewContext = {
+        document: mockTextDocument,
+        panel: mockWebviewPanel,
+        viewedStateStore: mockViewedStateStore,
+        isDisposed: false,
+        renderRequestId: 0,
+        shellInitialized: true,
+        shellGeneration: 4,
+        webviewReady: false,
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (provider as any).onWebviewReady(webviewContext, { shellGeneration: 3 });
+
+      expect(mockUpdateWebview).not.toHaveBeenCalled();
+      expect(webviewContext.webviewReady).toBe(false);
     });
 
     it("should dispose event handlers and clear pending renders on panel disposal", () => {

@@ -16,6 +16,15 @@ const messageReceivedHandler = new MessageToWebviewHandlerImpl({
     },
   },
 });
+
+const shellGeneration = Number(document.body.dataset.shellGeneration ?? "0");
+postMessageToExtensionWrapper({
+  kind: "ready",
+  payload: {
+    shellGeneration: Number.isFinite(shellGeneration) ? shellGeneration : 0,
+  },
+});
+
 globalThis.addEventListener("message", (event: MessageEvent<MessageToWebview>) => {
   if (event.origin !== globalThis.origin) {
     return;

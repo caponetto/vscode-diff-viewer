@@ -3,6 +3,7 @@ import { createRenderPlan, isActiveRenderRequest } from "../rendering";
 
 describe("provider/rendering", () => {
   const config = {
+    globalScrollbar: false,
     diff2html: {
       outputFormat: "side-by-side" as const,
       drawFileList: true,

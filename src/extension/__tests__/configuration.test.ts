@@ -70,6 +70,25 @@ describe("configuration", () => {
     expect(config.diff2html.colorScheme).toBe(ColorSchemeType.DARK);
   });
 
+  it("should default the global scrollbar setting to disabled", () => {
+    const config = extractConfig();
+
+    expect(config.globalScrollbar).toBe(false);
+  });
+
+  it("should preserve an explicit global scrollbar setting", () => {
+    mockGet.mockImplementation((key: string, fallback: unknown) => {
+      if (key === "globalScrollbar") {
+        return true;
+      }
+      return fallback;
+    });
+
+    const config = extractConfig();
+
+    expect(config.globalScrollbar).toBe(true);
+  });
+
   it("should report when auto color scheme mode is enabled", () => {
     expect(isAutoColorScheme()).toBe(true);
   });

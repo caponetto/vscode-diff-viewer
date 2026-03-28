@@ -25,6 +25,7 @@ describe("Skeleton Builder", () => {
       darkHighlightCssUri: mockDarkHighlightCssUri,
       cspSource,
       nonce,
+      shellGeneration: 3,
       ...overrides,
     });
 
@@ -50,6 +51,7 @@ describe("Skeleton Builder", () => {
 
       expect(html).toContain("<!doctype html>");
       expect(html).toContain('<html lang="en">');
+      expect(html).toContain('<body data-shell-generation="3">');
       expect(html).toContain("</html>");
     });
 
@@ -91,6 +93,9 @@ describe("Skeleton Builder", () => {
       expect(html).toContain(`id="${SkeletonElementIds.EmptyMessageContainer}"`);
       expect(html).toContain(`id="${SkeletonElementIds.LargeDiffNoticeContainer}"`);
       expect(html).toContain(`id="${SkeletonElementIds.DiffContainer}"`);
+      expect(html).toContain(`id="${SkeletonElementIds.HorizontalScrollbarContainer}"`);
+      expect(html).toContain(`id="${SkeletonElementIds.HorizontalScrollbarContent}"`);
+      expect(html).toContain(`id="${SkeletonElementIds.FooterStatus}"`);
       expect(html).toContain(`id="${SkeletonElementIds.ViewedIndicator}"`);
       expect(html).toContain(`id="${SkeletonElementIds.ViewedProgressContainer}"`);
     });
@@ -125,8 +130,16 @@ describe("Skeleton Builder", () => {
       const html = buildTestSkeleton();
 
       expect(html).toContain("<footer>");
+      const footerStatusIndex = html.indexOf(`id="${SkeletonElementIds.FooterStatus}"`);
+      const horizontalScrollbarIndex = html.indexOf(`id="${SkeletonElementIds.HorizontalScrollbarContainer}"`);
+      expect(footerStatusIndex).toBeLessThan(horizontalScrollbarIndex);
+      expect(html).toContain(`<div id="${SkeletonElementIds.FooterStatus}">`);
       expect(html).toContain(`<span id="${SkeletonElementIds.ViewedIndicator}" aria-live="polite"></span>`);
       expect(html).toContain(`<progress id="${SkeletonElementIds.ViewedProgressContainer}"`);
+      expect(html).toContain(
+        `<div id="${SkeletonElementIds.HorizontalScrollbarContainer}" aria-label="Horizontal diff scrollbar" style="display: none">`,
+      );
+      expect(html).toContain(`<div id="${SkeletonElementIds.HorizontalScrollbarContent}"></div>`);
       expect(html).toContain('aria-label="Viewed files progress"');
       expect(html).toContain('max="100"');
       expect(html).toContain('value="0"');
@@ -177,7 +190,7 @@ describe("Skeleton Builder", () => {
       // Check that the HTML structure is properly nested
       const headStart = html.indexOf("<head>");
       const headEnd = html.indexOf("</head>");
-      const bodyStart = html.indexOf("<body>");
+      const bodyStart = html.indexOf("<body ");
       const bodyEnd = html.indexOf("</body>");
 
       expect(headStart).toBeLessThan(headEnd);

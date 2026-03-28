@@ -16,6 +16,11 @@ export interface WebviewContext {
   isDisposed: boolean;
   renderRequestId: number;
   shellInitialized: boolean;
+  shellGeneration: number;
+  webviewReady: boolean;
+  pendingReadyRender?: {
+    collapseAll: boolean;
+  };
   lastRenderedColorScheme?: ColorSchemeType;
   pendingRender?: ReturnType<typeof setTimeout>;
   accessiblePathsCacheKey?: string;

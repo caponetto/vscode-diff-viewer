@@ -13,7 +13,7 @@
     <link id="highlight-light-stylesheet" rel="stylesheet" href="{{LIGHT_HIGHLIGHT_CSS_URI}}" />
     <link id="highlight-dark-stylesheet" rel="stylesheet" href="{{DARK_HIGHLIGHT_CSS_URI}}" disabled />
   </head>
-  <body>
+  <body data-shell-generation="{{SHELL_GENERATION}}">
     <div id="loading-container">
       <span>Loading...</span>
     </div>
@@ -23,8 +23,13 @@
     <div id="large-diff-notice-container" style="display: none"></div>
     <div id="diff-container"></div>
     <footer>
-      <span id="viewed-indicator" aria-live="polite"></span>
-      <progress id="viewed-progress-container" aria-label="Viewed files progress" max="100" value="0"></progress>
+      <div id="footer-status">
+        <span id="viewed-indicator" aria-live="polite"></span>
+        <progress id="viewed-progress-container" aria-label="Viewed files progress" max="100" value="0"></progress>
+      </div>
+      <div id="horizontal-scrollbar-container" aria-label="Horizontal diff scrollbar" style="display: none">
+        <div id="horizontal-scrollbar-content"></div>
+      </div>
     </footer>
     <script nonce="{{NONCE}}" src="{{WEBVIEW_URI}}"></script>
   </body>

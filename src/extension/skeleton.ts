@@ -8,6 +8,7 @@ interface BuildSkeletonArgs {
   darkHighlightCssUri: vscode.Uri;
   cspSource: string;
   nonce: string;
+  shellGeneration: number;
 }
 
 const renderCommonCssLinks = (cssUris: vscode.Uri[]): string =>
@@ -24,6 +25,7 @@ export const buildSkeleton = (args: BuildSkeletonArgs): string =>
     ["LIGHT_HIGHLIGHT_CSS_URI", args.lightHighlightCssUri.toString()],
     ["DARK_HIGHLIGHT_CSS_URI", args.darkHighlightCssUri.toString()],
     ["WEBVIEW_URI", args.webviewUri.toString()],
+    ["SHELL_GENERATION", String(args.shellGeneration)],
   ].reduce(
     (template, [token, value]) =>
       replaceTemplateToken({

@@ -40,6 +40,7 @@ describe("provider/shell", () => {
   it("initializes the shell only once", () => {
     const webviewContext = {
       shellInitialized: false,
+      shellGeneration: 0,
       panel: {
         webview: {
           cspSource: "vscode-webview:",
@@ -59,5 +60,6 @@ describe("provider/shell", () => {
 
     expect(buildSkeleton).toHaveBeenCalledTimes(1);
     expect((webviewContext as { shellInitialized: boolean }).shellInitialized).toBe(true);
+    expect((webviewContext as { shellGeneration: number }).shellGeneration).toBe(1);
   });
 });
