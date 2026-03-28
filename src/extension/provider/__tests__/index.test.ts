@@ -423,36 +423,6 @@ describe("DiffViewerProvider", () => {
       expect(mockWebview.postMessage).not.toHaveBeenCalled();
     });
 
-    it("should reopen the document with the default editor when it is part of a text diff comparison", async () => {
-      const mockDispose = jest.fn();
-      mockWebviewPanel.dispose = mockDispose;
-      (
-        vscode.window.tabGroups as unknown as {
-          all: Array<{ tabs: Array<{ input: unknown }> }>;
-        }
-      ).all = [
-        {
-          tabs: [
-            {
-              input: new (vscode.TabInputTextDiff as unknown as new (
-                original: { toString: () => string },
-                modified: { toString: () => string },
-              ) => unknown)(
-                { toString: () => "file:///workspace/base.patch" },
-                { toString: () => "file:///workspace/test.diff" },
-              ),
-            },
-          ],
-        },
-      ];
-
-      await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
-
-      expect(mockDispose).toHaveBeenCalled();
-      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.openWith", mockTextDocument.uri, "default");
-      expect(mockWebview.postMessage).not.toHaveBeenCalled();
-    });
-
     it("should send ping message and setup webview", async () => {
       await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
 
@@ -1336,7 +1306,7 @@ describe("DiffViewerProvider", () => {
       expect(mockWebviewPanel.dispose).not.toHaveBeenCalled();
     });
 
-    it("should fall back to the default editor when tabs change and the document becomes part of a text diff", () => {
+    it("should update webview when tabs change even if the document is part of a text diff", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mockUpdateWebview = jest.spyOn(provider as any, "updateWebview").mockImplementation(() => undefined);
       const mockDispose = jest.fn();
@@ -1394,9 +1364,9 @@ describe("DiffViewerProvider", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (provider as any).registerEventHandlers({ webviewContext, messageHandler: mockMessageHandler });
 
-      expect(mockDispose).toHaveBeenCalled();
-      expect(vscode.commands.executeCommand).toHaveBeenCalledWith("vscode.openWith", mockTextDocument.uri, "default");
-      expect(mockUpdateWebview).not.toHaveBeenCalledWith(webviewContext);
+      expect(mockDispose).not.toHaveBeenCalled();
+      expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+      expect(mockUpdateWebview).toHaveBeenCalledWith(webviewContext);
     });
 
     it("should dispose event handlers and clear pending renders on panel disposal", () => {
