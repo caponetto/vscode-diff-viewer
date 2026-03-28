@@ -13,6 +13,7 @@ Diff Viewer renders `.diff` and `.patch` files inside VS Code with [diff2html](h
 - Render `.diff` and `.patch` files in a custom editor instead of raw unified diff text.
 - Switch between line-by-line and side-by-side layouts from the editor title bar.
 - Collapse reviewed files and track progress across the current diff document.
+- Optionally show a persistent footer scrollbar for wide diffs.
 - Reopen a diff with all files collapsed from the Explorer context menu.
 - Open referenced files directly from file headers and line numbers when those paths are available in the current workspace or by absolute path.
 
@@ -37,6 +38,8 @@ Diff Viewer renders `.diff` and `.patch` files inside VS Code with [diff2html](h
 3. Use the editor title bar buttons to switch between line-by-line and side-by-side views.
 4. Use the checkbox beside each file header to collapse it after review, or use the title bar actions to expand or collapse all files.
 
+If you prefer a persistent horizontal scrollbar for wide side-by-side diffs, enable `diffviewer.globalScrollbar`.
+
 Viewed state is stored per diff document. If a file's diff changes later, the extension expands it again and marks it as changed since the last view.
 File header actions are only shown for paths the extension can currently resolve.
 
@@ -55,6 +58,7 @@ File header actions are only shown for paths the extension can currently resolve
 | -------------------------------------------- | -------------- | ---------------------------------------------------------- |
 | `diffviewer.colorScheme`                     | `auto`         | Renderer theme used in the webview.                        |
 | `diffviewer.outputFormat`                    | `line-by-line` | Layout used to render the diff.                            |
+| `diffviewer.globalScrollbar`                 | `false`        | Show a persistent footer scrollbar for wide diffs.         |
 | `diffviewer.drawFileList`                    | `true`         | Show the file summary list above the diff.                 |
 | `diffviewer.matching`                        | `none`         | Inline matching mode: `none`, `word`, or `char`.           |
 | `diffviewer.matchWordsThreshold`             | `0.25`         | Similarity threshold used for word matching.               |
