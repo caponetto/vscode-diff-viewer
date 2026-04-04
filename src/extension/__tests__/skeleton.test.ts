@@ -123,7 +123,11 @@ describe("Skeleton Builder", () => {
     it("should include the large diff notice container", () => {
       const html = buildTestSkeleton();
 
-      expect(html).toContain(`<div id="${SkeletonElementIds.LargeDiffNoticeContainer}" style="display: none"></div>`);
+      expect(html).toContain(`<div id="${SkeletonElementIds.LargeDiffNoticeContainer}" style="display: none">`);
+      expect(html).toContain(`<span id="${SkeletonElementIds.LargeDiffNoticeMessage}"></span>`);
+      expect(html).toContain(
+        `<button id="${SkeletonElementIds.LargeDiffNoticeDismiss}" type="button" aria-label="Dismiss large diff notice">Close</button>`,
+      );
     });
 
     it("should include footer with viewed elements", () => {

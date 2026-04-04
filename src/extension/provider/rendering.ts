@@ -13,14 +13,10 @@ export function createRenderPlan(args: {
 }): WebviewRenderPlan {
   const isLargeDiff =
     args.text.length >= LARGE_DIFF_TEXT_THRESHOLD || args.diffFiles.length >= LARGE_DIFF_FILE_THRESHOLD;
-  const forcedLineByLine = isLargeDiff && args.requestedConfig.diff2html.outputFormat === "side-by-side";
   const warningParts: string[] = [];
 
   if (isLargeDiff) {
     warningParts.push("Large diff detected. Files are opened collapsed to reduce initial render cost.");
-  }
-  if (forcedLineByLine) {
-    warningParts.push("Side-by-side view was replaced with line-by-line for this render.");
   }
 
   return {
@@ -30,15 +26,7 @@ export function createRenderPlan(args: {
       warning: warningParts.length > 0 ? warningParts.join(" ") : undefined,
       deferViewedStateHashing: isLargeDiff,
     },
-    config: forcedLineByLine
-      ? {
-          ...args.requestedConfig,
-          diff2html: {
-            ...args.requestedConfig.diff2html,
-            outputFormat: "line-by-line",
-          },
-        }
-      : args.requestedConfig,
+    config: args.requestedConfig,
   };
 }
 

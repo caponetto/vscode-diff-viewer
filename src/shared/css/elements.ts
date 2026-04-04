@@ -1,5 +1,7 @@
 export enum SkeletonElementIds {
   LargeDiffNoticeContainer = "large-diff-notice-container",
+  LargeDiffNoticeMessage = "large-diff-notice-message",
+  LargeDiffNoticeDismiss = "large-diff-notice-dismiss",
   DiffContainer = "diff-container",
   LoadingContainer = "loading-container",
   EmptyMessageContainer = "empty-message-container",

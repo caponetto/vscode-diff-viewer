@@ -24,12 +24,34 @@ export function updateHighlightTheme(theme: AppTheme): void {
 
 export function updateLargeDiffNotice(warning?: string): void {
   const notice = document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer);
-  if (!notice) {
+  const message = document.getElementById(SkeletonElementIds.LargeDiffNoticeMessage);
+  const dismissButton = document.getElementById(SkeletonElementIds.LargeDiffNoticeDismiss);
+  if (
+    !(notice instanceof HTMLDivElement) ||
+    !(message instanceof HTMLSpanElement) ||
+    !(dismissButton instanceof HTMLButtonElement)
+  ) {
     return;
   }
 
-  notice.textContent = warning ?? "";
-  notice.style.display = warning ? "block" : "none";
+  if (!dismissButton.dataset.bound) {
+    dismissButton.addEventListener("click", () => {
+      notice.dataset.dismissed = "true";
+      notice.style.display = "none";
+    });
+    dismissButton.dataset.bound = "true";
+  }
+
+  message.textContent = warning ?? "";
+  if (!warning) {
+    delete notice.dataset.warning;
+    delete notice.dataset.dismissed;
+  } else if (notice.dataset.warning !== warning) {
+    notice.dataset.warning = warning;
+    delete notice.dataset.dismissed;
+  }
+
+  notice.style.display = warning && notice.dataset.dismissed !== "true" ? "flex" : "none";
 }
 
 export function showLoading(isLoading: boolean): void {

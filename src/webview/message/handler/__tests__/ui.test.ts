@@ -10,7 +10,10 @@ describe("message/handler/ui", () => {
     document.body.innerHTML = `
       <div id="${SkeletonElementIds.LoadingContainer}" style="display:none"></div>
       <div id="${SkeletonElementIds.EmptyMessageContainer}" style="display:none"></div>
-      <div id="${SkeletonElementIds.LargeDiffNoticeContainer}" style="display:none"></div>
+      <div id="${SkeletonElementIds.LargeDiffNoticeContainer}" style="display:none">
+        <span id="${SkeletonElementIds.LargeDiffNoticeMessage}"></span>
+        <button id="${SkeletonElementIds.LargeDiffNoticeDismiss}" type="button">Close</button>
+      </div>
       <link id="${SkeletonElementIds.HighlightLightStylesheet}" rel="stylesheet" />
       <link id="${SkeletonElementIds.HighlightDarkStylesheet}" rel="stylesheet" />
       <span id="${SkeletonElementIds.ViewedIndicator}"></span>
@@ -48,8 +51,30 @@ describe("message/handler/ui", () => {
     expect((document.getElementById(SkeletonElementIds.EmptyMessageContainer) as HTMLDivElement).style.display).toBe(
       "block",
     );
-    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement).textContent).toBe(
+    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeMessage) as HTMLSpanElement).textContent).toBe(
       "Large diff",
+    );
+    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement).style.display).toBe(
+      "flex",
+    );
+  });
+
+  it("dismisses the large diff notice for the same warning only", () => {
+    updateLargeDiffNotice("Large diff");
+
+    (document.getElementById(SkeletonElementIds.LargeDiffNoticeDismiss) as HTMLButtonElement).click();
+    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement).style.display).toBe(
+      "none",
+    );
+
+    updateLargeDiffNotice("Large diff");
+    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement).style.display).toBe(
+      "none",
+    );
+
+    updateLargeDiffNotice("Large diff again");
+    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement).style.display).toBe(
+      "flex",
     );
   });
 

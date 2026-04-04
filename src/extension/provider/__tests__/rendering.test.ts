@@ -17,7 +17,7 @@ describe("provider/rendering", () => {
     },
   };
 
-  it("forces line-by-line and collapse for large diffs", () => {
+  it("keeps the requested output format and collapses large diffs", () => {
     const plan = createRenderPlan({
       requestedConfig: config,
       text: "x".repeat(600_000),
@@ -28,7 +28,7 @@ describe("provider/rendering", () => {
     expect(plan.collapseAll).toBe(true);
     expect(plan.performance.isLargeDiff).toBe(true);
     expect(plan.performance.deferViewedStateHashing).toBe(true);
-    expect(plan.config.diff2html.outputFormat).toBe("line-by-line");
+    expect(plan.config).toBe(config);
     expect(plan.performance.warning).toContain("Large diff detected.");
   });
 
