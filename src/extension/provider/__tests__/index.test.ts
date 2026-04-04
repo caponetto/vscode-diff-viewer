@@ -684,7 +684,7 @@ describe("DiffViewerProvider", () => {
       });
     });
 
-    it("should force line-by-line and collapsed render plan for large diffs", async () => {
+    it("should keep the chosen output format and collapse large diffs", async () => {
       const webviewContext = {
         document: mockTextDocument,
         panel: mockWebviewPanel,
@@ -709,7 +709,7 @@ describe("DiffViewerProvider", () => {
           collapseAll: true,
           config: expect.objectContaining({
             diff2html: expect.objectContaining({
-              outputFormat: "line-by-line",
+              outputFormat: "side-by-side",
             }),
           }),
           accessiblePaths: expect.any(Array),

@@ -2,10 +2,12 @@
   "compilerOptions": {
     "target": "ES2021",
     "lib": ["ES2021", "DOM"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
+    "rootDir": "src",
     "outDir": "dist",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "types": ["node", "jest", "vscode-webview"]
   },
   "include": ["src"],
   "exclude": ["./node_modules"]

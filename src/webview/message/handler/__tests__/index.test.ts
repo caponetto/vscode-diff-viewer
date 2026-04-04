@@ -97,7 +97,10 @@ const renderSkeleton = (): void => {
   document.body.innerHTML = `
     <div id="${SkeletonElementIds.LoadingContainer}"></div>
     <div id="${SkeletonElementIds.EmptyMessageContainer}"></div>
-    <div id="${SkeletonElementIds.LargeDiffNoticeContainer}"></div>
+    <div id="${SkeletonElementIds.LargeDiffNoticeContainer}" style="display: none">
+      <span id="${SkeletonElementIds.LargeDiffNoticeMessage}"></span>
+      <button id="${SkeletonElementIds.LargeDiffNoticeDismiss}" type="button">Close</button>
+    </div>
     <link id="${SkeletonElementIds.HighlightLightStylesheet}" rel="stylesheet" />
     <link id="${SkeletonElementIds.HighlightDarkStylesheet}" rel="stylesheet" />
     <div id="${SkeletonElementIds.DiffContainer}"></div>
@@ -216,7 +219,9 @@ describe("MessageToWebviewHandlerImpl", () => {
     );
 
     const notice = document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement;
-    expect(notice.textContent).toBe("Large diff detected.");
+    const noticeMessage = document.getElementById(SkeletonElementIds.LargeDiffNoticeMessage) as HTMLSpanElement;
+    expect(notice.style.display).toBe("flex");
+    expect(noticeMessage.textContent).toBe("Large diff detected.");
     expect(mockGetSha1Hash).not.toHaveBeenCalled();
 
     const viewedToggle = document.querySelector<HTMLInputElement>(".d2h-file-collapse-input");
@@ -227,6 +232,70 @@ describe("MessageToWebviewHandlerImpl", () => {
     }
 
     expect(mockGetSha1Hash).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the large-diff warning dismissed for the current open view", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        performance: {
+          isLargeDiff: true,
+          warning: "Large diff detected.",
+          deferViewedStateHashing: true,
+        },
+      }),
+    );
+
+    (document.getElementById(SkeletonElementIds.LargeDiffNoticeDismiss) as HTMLButtonElement).click();
+    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement).style.display).toBe(
+      "none",
+    );
+
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        performance: {
+          isLargeDiff: true,
+          warning: "Large diff detected.",
+          deferViewedStateHashing: true,
+        },
+      }),
+    );
+
+    expect((document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement).style.display).toBe(
+      "none",
+    );
+  });
+
+  it("shows a new large-diff warning after a different one was dismissed", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        performance: {
+          isLargeDiff: true,
+          warning: "Large diff detected.",
+          deferViewedStateHashing: true,
+        },
+      }),
+    );
+
+    (document.getElementById(SkeletonElementIds.LargeDiffNoticeDismiss) as HTMLButtonElement).click();
+
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        performance: {
+          isLargeDiff: true,
+          warning: "Large diff detected. Rendering may be slower than usual.",
+          deferViewedStateHashing: true,
+        },
+      }),
+    );
+
+    const notice = document.getElementById(SkeletonElementIds.LargeDiffNoticeContainer) as HTMLDivElement;
+    const noticeMessage = document.getElementById(SkeletonElementIds.LargeDiffNoticeMessage) as HTMLSpanElement;
+    expect(notice.style.display).toBe("flex");
+    expect(noticeMessage.textContent).toBe("Large diff detected. Rendering may be slower than usual.");
   });
 
   it("shows only file actions for accessible paths", async () => {

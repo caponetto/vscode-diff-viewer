@@ -91,11 +91,41 @@ body footer {
 
 #large-diff-notice-container {
   display: none;
-  padding: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--diff-viewer--border);
-  background: var(--diff-viewer--selection);
-  color: var(--diff-viewer--foreground);
+  background: var(--vscode-editorInfo-background, var(--diff-viewer--background));
+  color: var(--vscode-editorInfo-foreground, var(--diff-viewer--foreground));
+  font-size: 0.95em;
   flex: 0 0 auto;
+}
+
+#large-diff-notice-message {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+#large-diff-notice-dismiss {
+  border: 1px solid var(--vscode-button-secondaryBorder, var(--diff-viewer--border));
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1.2;
+  padding: 3px 10px;
+  flex: 0 0 auto;
+}
+
+#large-diff-notice-dismiss:hover {
+  background: var(--vscode-toolbar-hoverBackground, var(--diff-viewer--selection));
+}
+
+#large-diff-notice-dismiss:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, var(--diff-viewer--primary));
+  outline-offset: 2px;
 }
 
 #viewed-indicator {
