@@ -5,7 +5,7 @@ import { WebviewContext } from "../types";
 
 interface PendingTestStateRequest {
   webviewContext: WebviewContext;
-  resolve: (state: WebviewTestState | undefined) => void;
+  resolve: (state: WebviewTestState) => void;
   reject: (error: Error) => void;
   timeout: ReturnType<typeof setTimeout>;
 }
@@ -31,11 +31,9 @@ export class DiffViewerProviderTestSupport {
     },
   ) {}
 
-  public captureActiveTestState(
-    targetContext = this.args.getTargetWebviewContext(),
-  ): Promise<WebviewTestState | undefined> {
+  public captureActiveTestState(targetContext = this.args.getTargetWebviewContext()): Promise<WebviewTestState> {
     if (!targetContext || targetContext.isDisposed || !targetContext.webviewReady) {
-      return Promise.resolve(undefined);
+      return Promise.reject(new Error("No active webview available to capture test state."));
     }
 
     const requestId = `test-state-${++this.testStateRequestCounter}`;

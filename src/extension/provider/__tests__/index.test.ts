@@ -475,6 +475,18 @@ describe("DiffViewerProvider", () => {
       await expect(testStatePromise).resolves.toEqual(expectedState);
     });
 
+    it("should fail test state capture when there is no active webview context", async () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] === "diffviewer._captureActiveTestState")?.[1];
+      expect(command).toBeDefined();
+
+      await expect(command()).rejects.toThrow("No active webview available to capture test state.");
+    });
+
     it("should run a test action against the active webview context", async () => {
       DiffViewerProvider.registerContributions({
         extensionContext: mockExtensionContext,
