@@ -111,13 +111,36 @@ async function runActiveTestAction(action) {
 }
 
 async function setDiffviewerConfig(key, value) {
-  await vscode.workspace.getConfiguration("diffviewer").update(key, value, vscode.ConfigurationTarget.Global);
+  await vscode.workspace.getConfiguration("diffviewer").update(key, value, vscode.ConfigurationTarget.Workspace);
+}
+
+async function cleanupEmptyWorkspaceSettings() {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) {
+    return;
+  }
+
+  const vscodeDirectory = vscode.Uri.joinPath(workspaceFolder.uri, ".vscode");
+  const settingsUri = vscode.Uri.joinPath(vscodeDirectory, "settings.json");
+  try {
+    const settingsText = textDecoder.decode(await vscode.workspace.fs.readFile(settingsUri));
+    const settings = JSON.parse(settingsText);
+    if (Object.keys(settings).length > 0) {
+      return;
+    }
+
+    await vscode.workspace.fs.delete(settingsUri);
+    await vscode.workspace.fs.delete(vscodeDirectory);
+  } catch {
+    // The fixture workspace may not have a settings file, or the directory may contain other files.
+  }
 }
 
 async function resetDiffviewerConfig(keys) {
   for (const key of keys) {
     await setDiffviewerConfig(key, undefined);
   }
+  await cleanupEmptyWorkspaceSettings();
 }
 
 async function waitForTestState(predicate, message) {

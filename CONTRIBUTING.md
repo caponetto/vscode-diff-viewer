@@ -4,7 +4,7 @@ Thanks for contributing to Diff Viewer.
 
 ## Prerequisites
 
-- Node.js 22+
+- Node.js 22.x
 - npm
 - VS Code
 

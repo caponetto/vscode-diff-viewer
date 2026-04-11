@@ -11,6 +11,7 @@ const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
 
 console.log("Building extension for desktop integration test...");
 execFileSync(npmCommand, ["run", "build:dev"], {
+  cwd: repositoryRoot,
   stdio: "inherit",
 });
 

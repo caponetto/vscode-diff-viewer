@@ -239,12 +239,12 @@ describe("DiffViewerProvider", () => {
     });
 
     it("should register custom editor provider and commands", () => {
-      const disposables = DiffViewerProvider.registerContributions({
+      DiffViewerProvider.registerContributions({
         extensionContext: mockExtensionContext,
         webviewPath: mockWebviewPath,
       });
+      const registeredCommandIds = mockRegisterCommand.mock.calls.map(([commandId]) => commandId);
 
-      expect(disposables).toHaveLength(9);
       expect(mockRegisterCustomEditorProvider).toHaveBeenCalledWith("diffViewer", expect.any(DiffViewerProvider), {
         webviewOptions: {
           retainContextWhenHidden: true,
@@ -252,14 +252,19 @@ describe("DiffViewerProvider", () => {
         },
         supportsMultipleEditorsPerDocument: false,
       });
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showLineByLine", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showSideBySide", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.expandAll", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.collapseAll", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showRaw", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.openCollapsed", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer._captureActiveTestState", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer._runActiveTestAction", expect.any(Function));
+      expect(registeredCommandIds).toEqual([
+        "diffviewer.showLineByLine",
+        "diffviewer.showSideBySide",
+        "diffviewer.expandAll",
+        "diffviewer.collapseAll",
+        "diffviewer.showRaw",
+        "diffviewer.openCollapsed",
+        "diffviewer._captureActiveTestState",
+        "diffviewer._runActiveTestAction",
+      ]);
+      for (const commandId of registeredCommandIds) {
+        expect(mockRegisterCommand).toHaveBeenCalledWith(commandId, expect.any(Function));
+      }
     });
 
     it.each([
@@ -515,6 +520,20 @@ describe("DiffViewerProvider", () => {
       });
 
       await expect(actionPromise).resolves.toBeUndefined();
+    });
+
+    it("should fail test actions when there is no active webview context", async () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] === "diffviewer._runActiveTestAction")?.[1];
+      expect(command).toBeDefined();
+
+      await expect(command({ kind: "clickFileName", path: "src/file.ts" })).rejects.toThrow(
+        "No active webview available to run test action.",
+      );
     });
   });
 

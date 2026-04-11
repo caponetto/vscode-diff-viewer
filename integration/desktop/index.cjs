@@ -23,6 +23,10 @@ const CONFIG_KEYS = [
   "renderNothingWhenEmpty",
 ];
 
+function arrayIncludesAll(values, expectedValues) {
+  return expectedValues.every((expectedValue) => values.includes(expectedValue));
+}
+
 async function assertRenderedState({
   sampleUri,
   expectedFileCount,
@@ -41,8 +45,10 @@ async function assertRenderedState({
     (candidate) =>
       candidate.isReady &&
       candidate.fileCount === expectedFileCount &&
+      arrayIncludesAll(candidate.filePaths, expectedPaths) &&
       (!expectedOutputFormat || candidate.outputFormat === expectedOutputFormat) &&
       (!expectedColorScheme || candidate.colorScheme === expectedColorScheme) &&
+      (expectedCollapsedCount === undefined || candidate.collapsedFilePaths.length === expectedCollapsedCount) &&
       (expectedFileListVisible === undefined || candidate.fileListVisible === expectedFileListVisible) &&
       (expectedScrollbarVisible === undefined || candidate.scrollbarVisible === expectedScrollbarVisible) &&
       (expectedInlineHighlightCount === undefined || candidate.inlineHighlightCount === expectedInlineHighlightCount) &&
@@ -134,6 +140,7 @@ async function ensureExtensionActive() {
 
 async function runConfigScenario({ sampleUri, matchingUri, wideUri, emptyUri }) {
   try {
+    await resetDiffviewerConfig(CONFIG_KEYS);
     await setDiffviewerConfig("outputFormat", "line-by-line");
     await setDiffviewerConfig("drawFileList", true);
     await setDiffviewerConfig("matching", "none");

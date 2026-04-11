@@ -12,6 +12,7 @@ const isCi = process.env.CI === "true";
 
 console.log("Building extension for smoke test...");
 execFileSync(npmCommand, ["run", "build:dev"], {
+  cwd: repositoryRoot,
   stdio: "inherit",
 });
 
@@ -24,9 +25,8 @@ execFileSync(
   [
     "vscode-test-web",
     "--browserType=chromium",
-    "--extensionDevelopmentPath=.",
-    "--extensionTestsPath",
-    extensionTestsPath,
+    `--extensionDevelopmentPath=${repositoryRoot}`,
+    `--extensionTestsPath=${extensionTestsPath}`,
     "--quality",
     "stable",
     "--esm",
@@ -34,6 +34,7 @@ execFileSync(
     workspacePath,
   ],
   {
+    cwd: repositoryRoot,
     stdio: "inherit",
   },
 );

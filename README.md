@@ -22,13 +22,13 @@ Diff Viewer renders `.diff` and `.patch` files inside VS Code with [diff2html](h
 ### Without the extension 📄
 
 <p align="center">
-  <img src="documentation/original.png" width="700">
+  <img src="documentation/original.png" alt="Original diff file shown as raw text in VS Code" width="700">
 </p>
 
 ### With the extension ✅
 
 <p align="center">
-  <img src="documentation/demo.png" width="700">
+  <img src="documentation/demo.png" alt="Diff Viewer extension rendering a patch file in VS Code" width="700">
 </p>
 
 ## Usage 🚀

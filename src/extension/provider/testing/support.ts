@@ -81,7 +81,7 @@ export class DiffViewerProviderTestSupport {
     targetContext = this.args.getTargetWebviewContext(),
   ): Promise<void> {
     if (!targetContext || targetContext.isDisposed || !targetContext.webviewReady) {
-      return Promise.resolve();
+      return Promise.reject(new Error("No active webview available to run test action."));
     }
 
     const requestId = `test-action-${++this.testActionRequestCounter}`;

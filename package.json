@@ -102,6 +102,7 @@
         "properties": {
           "diffviewer.colorScheme": {
             "type": "string",
+            "scope": "resource",
             "default": "auto",
             "enum": [
               "auto",
@@ -112,6 +113,7 @@
           },
           "diffviewer.outputFormat": {
             "type": "string",
+            "scope": "resource",
             "default": "line-by-line",
             "enum": [
               "line-by-line",
@@ -121,16 +123,19 @@
           },
           "diffviewer.globalScrollbar": {
             "type": "boolean",
+            "scope": "resource",
             "default": false,
             "markdownDescription": "Show a sticky horizontal scrollbar below the viewed summary for wide diffs."
           },
           "diffviewer.drawFileList": {
             "type": "boolean",
+            "scope": "resource",
             "default": true,
             "markdownDescription": "Show the file summary list above the rendered diff."
           },
           "diffviewer.matching": {
             "type": "string",
+            "scope": "resource",
             "default": "none",
             "enum": [
               "words",
@@ -141,6 +146,7 @@
           },
           "diffviewer.matchWordsThreshold": {
             "type": "number",
+            "scope": "resource",
             "default": 0.25,
             "minimum": 0,
             "maximum": 1,
@@ -148,24 +154,28 @@
           },
           "diffviewer.matchingMaxComparisons": {
             "type": "integer",
+            "scope": "resource",
             "default": 2500,
             "minimum": 0,
             "markdownDescription": "Maximum number of comparisons performed while matching changed lines inside a block."
           },
           "diffviewer.maxLineSizeInBlockForComparison": {
             "type": "integer",
+            "scope": "resource",
             "default": 200,
             "minimum": 0,
             "markdownDescription": "Maximum line length allowed when comparing lines inside a changed block."
           },
           "diffviewer.maxLineLengthHighlight": {
             "type": "integer",
+            "scope": "resource",
             "default": 10000,
             "minimum": 0,
             "markdownDescription": "Only highlight inline changes for lines shorter than this limit."
           },
           "diffviewer.renderNothingWhenEmpty": {
             "type": "boolean",
+            "scope": "resource",
             "default": false,
             "markdownDescription": "Render no file output when a comparison produces no visible changes."
           }

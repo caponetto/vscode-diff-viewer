@@ -1,4 +1,4 @@
-import { AppConfig } from "../../../extension/configuration";
+import type { AppConfig } from "../../../extension/configuration";
 
 export interface WebviewTestState {
   isReady: boolean;

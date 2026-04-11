@@ -132,13 +132,36 @@ async function runActiveTestAction(action) {
 }
 
 async function setDiffviewerConfig(key, value) {
-  await vscode.workspace.getConfiguration("diffviewer").update(key, value, vscode.ConfigurationTarget.Global);
+  await vscode.workspace.getConfiguration("diffviewer").update(key, value, vscode.ConfigurationTarget.Workspace);
+}
+
+async function cleanupEmptyWorkspaceSettings() {
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) {
+    return;
+  }
+
+  const vscodeDirectory = vscode.Uri.joinPath(workspaceFolder.uri, ".vscode");
+  const settingsUri = vscode.Uri.joinPath(vscodeDirectory, "settings.json");
+  try {
+    const settingsText = textDecoder.decode(await vscode.workspace.fs.readFile(settingsUri));
+    const settings = JSON.parse(settingsText);
+    if (Object.keys(settings).length > 0) {
+      return;
+    }
+
+    await vscode.workspace.fs.delete(settingsUri);
+    await vscode.workspace.fs.delete(vscodeDirectory);
+  } catch {
+    // The fixture workspace may not have a settings file, or the directory may contain other files.
+  }
 }
 
 async function resetDiffviewerConfig() {
   for (const key of CONFIG_KEYS) {
     await setDiffviewerConfig(key, undefined);
   }
+  await cleanupEmptyWorkspaceSettings();
 }
 
 async function waitForTestState(predicate, message) {
@@ -163,6 +186,10 @@ function expectArrayIncludesAll(values, expectedValues, messagePrefix) {
   for (const expectedValue of expectedValues) {
     expect(values.includes(expectedValue), `${messagePrefix}: missing ${expectedValue}`);
   }
+}
+
+function arrayIncludesAll(values, expectedValues) {
+  return expectedValues.every((expectedValue) => values.includes(expectedValue));
 }
 
 function expectArrayContainsSubstrings(values, expectedSubstrings, messagePrefix) {
@@ -205,8 +232,12 @@ async function assertRenderedState({
     (candidate) =>
       candidate.isReady &&
       candidate.fileCount === expectedFileCount &&
+      arrayIncludesAll(candidate.filePaths, expectedFilePaths) &&
       (!expectedOutputFormat || candidate.outputFormat === expectedOutputFormat) &&
       (!expectedColorScheme || candidate.colorScheme === expectedColorScheme) &&
+      (expectedCollapsedCount === undefined || candidate.collapsedFilePaths.length === expectedCollapsedCount) &&
+      (!expectedSelectedPath || candidate.selectedPath === expectedSelectedPath) &&
+      (!expectedWarning || candidate.largeDiffWarning?.includes(expectedWarning)) &&
       (expectedFileListVisible === undefined || candidate.fileListVisible === expectedFileListVisible) &&
       (expectedScrollbarVisible === undefined || candidate.scrollbarVisible === expectedScrollbarVisible) &&
       (expectedInlineHighlightCount === undefined || candidate.inlineHighlightCount === expectedInlineHighlightCount) &&
@@ -474,6 +505,7 @@ async function runConfigScenario({ sampleUri, matchingUri, wideUri, emptyUri }) 
   console.log("[smoke] Starting config scenario");
 
   try {
+    await resetDiffviewerConfig();
     await setDiffviewerConfig("outputFormat", "line-by-line");
     await setDiffviewerConfig("drawFileList", true);
     await setDiffviewerConfig("matching", "none");
