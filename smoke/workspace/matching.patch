@@ -1,0 +1,8 @@
+diff --git a/src/matching.ts b/src/matching.ts
+index 8888888..9999999 100644
+--- a/src/matching.ts
++++ b/src/matching.ts
+@@ -1,2 +1,2 @@
+-export const flavour = "color";
++export const flavour = "colour";
+ export const mode = "matching";

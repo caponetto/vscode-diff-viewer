@@ -170,6 +170,13 @@ describe("MessageToWebviewHandlerImpl", () => {
 
     const actionButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".diff-viewer-file-action-button"));
     expect(actionButtons.map((button) => button.textContent)).toEqual(["Open old", "Open new", "Open file"]);
+
+    const firstHeader = document.querySelector<HTMLElement>(".d2h-file-header");
+    const firstActions = firstHeader?.querySelector<HTMLElement>(".diff-viewer-file-actions");
+    const firstViewedToggle = firstHeader?.querySelector<HTMLElement>(".d2h-file-collapse");
+    expect(firstActions).toBeTruthy();
+    expect(firstViewedToggle).toBeTruthy();
+    expect(firstActions?.nextElementSibling).toBe(firstViewedToggle);
   });
 
   it("opens explicit old and new file actions through extension messages", async () => {
@@ -404,6 +411,80 @@ describe("MessageToWebviewHandlerImpl", () => {
     expect(postMessageToExtensionFn).toHaveBeenCalledWith({
       kind: "toggleFileViewed",
       payload: { path: "src/file.ts", viewedSha1: null },
+    });
+  });
+
+  it("reports structured test state from the rendered webview", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+        viewedState: {},
+        collapseAll: false,
+        performance: { isLargeDiff: false, deferViewedStateHashing: false },
+      }),
+    );
+
+    handler.captureTestState({ requestId: "req-1" });
+
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "reportTestState",
+      payload: {
+        requestId: "req-1",
+        state: expect.objectContaining({
+          isReady: true,
+          shellGeneration: 0,
+          outputFormat: "side-by-side",
+          fileCount: 1,
+          filePaths: ["src/file.ts"],
+          fileHeaders: ["src/file.ts"],
+          collapsedFilePaths: [],
+          selectedPath: "src/renamed new.ts",
+        }),
+      },
+    });
+  });
+
+  it("runs supported test actions against rendered elements", async () => {
+    await handler.updateWebview(
+      createUpdatePayload({
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+        viewedState: {},
+        collapseAll: false,
+        performance: { isLargeDiff: false, deferViewedStateHashing: false },
+      }),
+    );
+
+    await handler.runTestAction({ requestId: "req-file", action: { kind: "clickFileName", path: "src/file.ts" } });
+    await handler.runTestAction({
+      requestId: "req-line",
+      action: { kind: "clickLineNumber", path: "src/file.ts", line: 12 },
+    });
+    await handler.runTestAction({
+      requestId: "req-toggle",
+      action: { kind: "toggleViewed", path: "src/file.ts", viewed: true },
+    });
+
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "reportTestActionResult",
+      payload: { requestId: "req-file" },
+    });
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "reportTestActionResult",
+      payload: { requestId: "req-line" },
+    });
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "reportTestActionResult",
+      payload: { requestId: "req-toggle" },
+    });
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "openFile",
+      payload: { path: "src/file.ts", line: undefined },
+    });
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "openFile",
+      payload: { path: "src/file.ts", line: 12 },
     });
   });
 

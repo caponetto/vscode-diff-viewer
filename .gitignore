@@ -1,5 +1,6 @@
 **/node_modules/
 **/dist/
+**/.vscode-test/
 **/.vscode-test-web/
 **/coverage/
 smoke/workspace/generated/

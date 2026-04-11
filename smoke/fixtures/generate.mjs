@@ -2,7 +2,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const workspacePath = resolve("smoke", "workspace");
+const smokeDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const workspacePath = resolve(smokeDirectory, "workspace");
 const hugePatchPath = resolve(workspacePath, "generated", "huge-multi-file.patch");
 
 function generateHugeMultiFilePatch({ fileCount = 160, changedLinesPerFile = 120 } = {}) {

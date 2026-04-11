@@ -139,11 +139,42 @@ describe("Message Types and Utilities", () => {
   describe("Message Envelope Guards", () => {
     it("should recognize valid extension messages", () => {
       expect(isMessageToExtension({ kind: "requestWebviewAction", payload: { action: "expandAll" } })).toBe(true);
+      expect(
+        isMessageToExtension({
+          kind: "reportTestState",
+          payload: {
+            requestId: "req-1",
+            state: {
+              isReady: true,
+              shellGeneration: 1,
+              outputFormat: "line-by-line",
+              fileCount: 1,
+              filePaths: ["src/file.ts"],
+              fileHeaders: ["src/file.ts"],
+              fileListVisible: true,
+              collapsedFilePaths: [],
+              scrollbarVisible: false,
+              inlineHighlightCount: 0,
+              lightHighlightDisabled: false,
+              darkHighlightDisabled: true,
+              codeLineTexts: ["content"],
+            },
+          },
+        }),
+      ).toBe(true);
+      expect(isMessageToExtension({ kind: "reportTestActionResult", payload: { requestId: "req-1" } })).toBe(true);
       expect(isMessageToExtension({ kind: "unknown" })).toBe(false);
     });
 
     it("should recognize valid webview messages", () => {
       expect(isMessageToWebview({ kind: "performWebviewAction", payload: { action: "expandAll" } })).toBe(true);
+      expect(isMessageToWebview({ kind: "captureTestState", payload: { requestId: "req-1" } })).toBe(true);
+      expect(
+        isMessageToWebview({
+          kind: "runTestAction",
+          payload: { requestId: "req-1", action: { kind: "clickFileName", path: "src/file.ts" } },
+        }),
+      ).toBe(true);
       expect(isMessageToWebview({ kind: "performReviewAction", payload: { action: "expandAll" } })).toBe(false);
     });
   });

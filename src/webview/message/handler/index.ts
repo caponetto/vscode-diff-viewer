@@ -12,6 +12,7 @@ import { UpdateWebviewPayload, WebviewAction, WebviewUiState } from "../api";
 import { getSha1Hash } from "../hash";
 import { buildDiffFileMap, buildDiffFileViewModel, buildDiffHashes } from "./models";
 import { HorizontalScrollbarController } from "./scrollbar";
+import { WebviewHandlerTestSupport } from "./testing/support";
 import {
   CHANGED_SINCE_VIEWED,
   DEFAULT_UI_STATE,
@@ -33,6 +34,7 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
   private fileBindings: FileDomBinding[] = [];
   private diffContainerHandlersRegistered = false;
   private readonly horizontalScrollbarController: HorizontalScrollbarController;
+  private readonly testSupport: WebviewHandlerTestSupport;
 
   constructor(
     private readonly args: {
@@ -48,6 +50,13 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     this.horizontalScrollbarController = new HorizontalScrollbarController({
       getConfig: () => this.currentConfig,
       getFileBindings: () => this.fileBindings,
+    });
+    this.testSupport = new WebviewHandlerTestSupport({
+      postMessageToExtensionFn: this.args.postMessageToExtensionFn,
+      getCurrentConfig: () => this.currentConfig,
+      getFileBindings: () => this.fileBindings,
+      getSelectedPath: () => this.currentUiState.selectedPath,
+      getClickedLineNumber: (element) => this.getClickedLineNumber(element),
     });
   }
 
@@ -129,6 +138,14 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       case "showRaw":
         return;
     }
+  }
+
+  public captureTestState(payload: Parameters<WebviewHandlerTestSupport["captureTestState"]>[0]): void {
+    this.testSupport.captureTestState(payload);
+  }
+
+  public runTestAction(payload: Parameters<WebviewHandlerTestSupport["runTestAction"]>[0]): Promise<void> {
+    return this.testSupport.runTestAction(payload);
   }
 
   private registerDiffContainerHandlers(diffContainer: HTMLElement): void {
@@ -313,6 +330,12 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
     }
 
     if (actionsContainer.childElementCount > 0) {
+      const viewedToggleLabel = header.querySelector<HTMLElement>(Diff2HtmlCssClassElements.Label__ViewedToggle);
+      if (viewedToggleLabel) {
+        viewedToggleLabel.before(actionsContainer);
+        return;
+      }
+
       header.append(actionsContainer);
     }
   }

@@ -5,17 +5,24 @@ import { getPathBaseName } from "../../shared/path";
 import { ViewedStateStore } from "../viewed-state";
 import { WebviewAction } from "../../webview/message/api";
 import { resolveAccessibleUri } from "../path-resolution";
+import { MessageToExtensionReportCallbacks, MessageToExtensionReportDispatcher } from "./testing/support";
 
 export class MessageToExtensionHandlerImpl extends GenericMessageHandlerImpl implements MessageToExtensionHandler {
+  private readonly reportDispatcher: MessageToExtensionReportDispatcher;
+
   constructor(
     private readonly args: {
       diffDocument: vscode.TextDocument;
       viewedStateStore: ViewedStateStore;
       onWebviewActionRequested: (action: WebviewAction) => void;
       onReadyReceived?: (payload: { shellGeneration: number }) => void;
-    },
+    } & MessageToExtensionReportCallbacks,
   ) {
     super();
+    this.reportDispatcher = new MessageToExtensionReportDispatcher({
+      onTestStateReported: this.args.onTestStateReported,
+      onTestActionResultReported: this.args.onTestActionResultReported,
+    });
   }
 
   public ready(payload: { shellGeneration: number }): void {
@@ -48,5 +55,15 @@ export class MessageToExtensionHandlerImpl extends GenericMessageHandlerImpl imp
 
   public requestWebviewAction(payload: { action: WebviewAction }): void {
     this.args.onWebviewActionRequested(payload.action);
+  }
+
+  public reportTestState(payload: Parameters<MessageToExtensionReportDispatcher["reportTestState"]>[0]): void {
+    this.reportDispatcher.reportTestState(payload);
+  }
+
+  public reportTestActionResult(
+    payload: Parameters<MessageToExtensionReportDispatcher["reportTestActionResult"]>[0],
+  ): void {
+    this.reportDispatcher.reportTestActionResult(payload);
   }
 }
