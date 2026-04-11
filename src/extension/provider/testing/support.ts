@@ -50,13 +50,19 @@ export class DiffViewerProviderTestSupport {
         timeout,
       });
 
-      this.args.postMessageToWebview({
-        webview: targetContext.panel.webview,
-        message: {
-          kind: "captureTestState",
-          payload: { requestId },
-        },
-      });
+      try {
+        this.args.postMessageToWebview({
+          webview: targetContext.panel.webview,
+          message: {
+            kind: "captureTestState",
+            payload: { requestId },
+          },
+        });
+      } catch (error) {
+        clearTimeout(timeout);
+        this.pendingTestStateRequests.delete(requestId);
+        reject(error instanceof Error ? error : new Error("Failed to request test state from webview."));
+      }
     });
   }
 
@@ -98,13 +104,21 @@ export class DiffViewerProviderTestSupport {
         timeout,
       });
 
-      this.args.postMessageToWebview({
-        webview: targetContext.panel.webview,
-        message: {
-          kind: "runTestAction",
-          payload: { requestId, action },
-        },
-      });
+      try {
+        this.args.postMessageToWebview({
+          webview: targetContext.panel.webview,
+          message: {
+            kind: "runTestAction",
+            payload: { requestId, action },
+          },
+        });
+      } catch (error) {
+        clearTimeout(timeout);
+        this.pendingTestActionRequests.delete(requestId);
+        reject(
+          error instanceof Error ? error : new Error(`Failed to request test action ${action.kind} from webview.`),
+        );
+      }
     });
   }
 
