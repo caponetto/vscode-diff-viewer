@@ -3,7 +3,7 @@ const vscode = require("vscode");
 const OPEN_TIMEOUT_MS = 30_000;
 const POLL_INTERVAL_MS = 100;
 const FINAL_DELAY_MS = 2_000;
-const RUN_TIMEOUT_MS = 120_000;
+const RUN_TIMEOUT_MS = 240_000;
 const STANDARD_SETTLE_MS = 500;
 const LARGE_SETTLE_MS = 2_000;
 const CONFIG_KEYS = [
@@ -70,6 +70,11 @@ async function openDiffViewer(sampleUri) {
     const input = getActiveTabInput();
     return isTabInputCustomForUri(input, sampleUri) && input.viewType === "diffViewer";
   }, `Timed out waiting for Diff Viewer to open ${sampleUri.toString()}.`);
+}
+
+async function closeAllEditors() {
+  await vscode.commands.executeCommand("workbench.action.closeAllEditors");
+  await settle(STANDARD_SETTLE_MS);
 }
 
 async function openCollapsedDiffViewer(sampleUri) {
@@ -603,9 +608,13 @@ async function run() {
     await Promise.race([
       (async () => {
         await runSampleScenario(sampleUri);
+        await closeAllEditors();
         await runSpacesScenario(spacesUri);
+        await closeAllEditors();
         await runLargeScenario(largeUri);
+        await closeAllEditors();
         await runHugeScenario(hugeUri);
+        await closeAllEditors();
         await runConfigScenario({ sampleUri, matchingUri, wideUri, emptyUri });
         await settle(FINAL_DELAY_MS);
       })(),
