@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { MessageToExtensionHandlerImpl } from "../handler";
 import { ViewedStateStore } from "../../viewed-state";
+import { WebviewTestState } from "../../../webview/message/testing/api";
 
 describe("MessageToExtensionHandlerImpl", () => {
   let mockDiffDocument: vscode.TextDocument;
@@ -220,6 +221,54 @@ describe("MessageToExtensionHandlerImpl", () => {
     });
   });
 
+  describe("reportTestState", () => {
+    const testState: WebviewTestState = {
+      isReady: true,
+      shellGeneration: 2,
+      outputFormat: "line-by-line",
+      fileCount: 1,
+      filePaths: ["src/file.ts"],
+      fileHeaders: ["src/file.ts"],
+      fileListVisible: true,
+      collapsedFilePaths: [],
+      scrollbarVisible: false,
+      inlineHighlightCount: 0,
+      lightHighlightDisabled: false,
+      darkHighlightDisabled: true,
+      codeLineTexts: ["content"],
+    };
+
+    it("should forward reported test state to the callback when provided", () => {
+      const onTestStateReported = jest.fn();
+      handler = new MessageToExtensionHandlerImpl({
+        diffDocument: mockDiffDocument,
+        viewedStateStore: mockViewedStateStore,
+        onWebviewActionRequested: jest.fn(),
+        onTestStateReported,
+      });
+
+      handler.reportTestState({ requestId: "req-1", state: testState });
+
+      expect(onTestStateReported).toHaveBeenCalledWith({ requestId: "req-1", state: testState });
+    });
+  });
+
+  describe("reportTestActionResult", () => {
+    it("should forward reported test action results to the callback when provided", () => {
+      const onTestActionResultReported = jest.fn();
+      handler = new MessageToExtensionHandlerImpl({
+        diffDocument: mockDiffDocument,
+        viewedStateStore: mockViewedStateStore,
+        onWebviewActionRequested: jest.fn(),
+        onTestActionResultReported,
+      });
+
+      handler.reportTestActionResult({ requestId: "req-1" });
+
+      expect(onTestActionResultReported).toHaveBeenCalledWith({ requestId: "req-1" });
+    });
+  });
+
   describe("onMessageReceived", () => {
     it("should route ready message correctly", () => {
       const readySpy = jest.spyOn(handler, "ready");
@@ -255,6 +304,41 @@ describe("MessageToExtensionHandlerImpl", () => {
       handler.onMessageReceived({ kind: "requestWebviewAction", payload });
 
       expect(actionSpy).toHaveBeenCalledWith(payload);
+    });
+
+    it("should route reportTestState message correctly", () => {
+      const testStateSpy = jest.spyOn(handler, "reportTestState");
+      const payload = {
+        requestId: "req-1",
+        state: {
+          isReady: true,
+          shellGeneration: 1,
+          outputFormat: "side-by-side" as const,
+          fileCount: 1,
+          filePaths: ["src/file.ts"],
+          fileHeaders: ["src/file.ts"],
+          fileListVisible: true,
+          collapsedFilePaths: [],
+          scrollbarVisible: false,
+          inlineHighlightCount: 0,
+          lightHighlightDisabled: false,
+          darkHighlightDisabled: true,
+          codeLineTexts: ["content"],
+        },
+      };
+
+      handler.onMessageReceived({ kind: "reportTestState", payload });
+
+      expect(testStateSpy).toHaveBeenCalledWith(payload);
+    });
+
+    it("should route reportTestActionResult message correctly", () => {
+      const resultSpy = jest.spyOn(handler, "reportTestActionResult");
+      const payload = { requestId: "req-1", error: "boom" };
+
+      handler.onMessageReceived({ kind: "reportTestActionResult", payload });
+
+      expect(resultSpy).toHaveBeenCalledWith(payload);
     });
 
     it("should throw error for unknown message kind", () => {
@@ -314,15 +398,41 @@ describe("MessageToExtensionHandlerImpl", () => {
       const readySpy = jest.spyOn(handler, "ready");
       const openFileSpy = jest.spyOn(handler, "openFile").mockResolvedValue();
       const toggleSpy = jest.spyOn(handler, "toggleFileViewed");
+      const testStateSpy = jest.spyOn(handler, "reportTestState");
+      const testActionSpy = jest.spyOn(handler, "reportTestActionResult");
 
       // Test all message types
       handler.onMessageReceived({ kind: "ready", payload: { shellGeneration: 1 } });
       handler.onMessageReceived({ kind: "openFile", payload: { path: "test.ts" } });
       handler.onMessageReceived({ kind: "toggleFileViewed", payload: { path: "test.ts", viewedSha1: "abc" } });
+      handler.onMessageReceived({
+        kind: "reportTestState",
+        payload: {
+          requestId: "req-1",
+          state: {
+            isReady: true,
+            shellGeneration: 1,
+            outputFormat: "line-by-line",
+            fileCount: 1,
+            filePaths: ["test.ts"],
+            fileHeaders: ["test.ts"],
+            fileListVisible: true,
+            collapsedFilePaths: [],
+            scrollbarVisible: false,
+            inlineHighlightCount: 0,
+            lightHighlightDisabled: false,
+            darkHighlightDisabled: true,
+            codeLineTexts: ["content"],
+          },
+        },
+      });
+      handler.onMessageReceived({ kind: "reportTestActionResult", payload: { requestId: "req-1" } });
 
       expect(readySpy).toHaveBeenCalledTimes(1);
       expect(openFileSpy).toHaveBeenCalledTimes(1);
       expect(toggleSpy).toHaveBeenCalledTimes(1);
+      expect(testStateSpy).toHaveBeenCalledTimes(1);
+      expect(testActionSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

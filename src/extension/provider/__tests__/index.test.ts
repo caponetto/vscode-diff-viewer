@@ -239,12 +239,12 @@ describe("DiffViewerProvider", () => {
     });
 
     it("should register custom editor provider and commands", () => {
-      const disposables = DiffViewerProvider.registerContributions({
+      DiffViewerProvider.registerContributions({
         extensionContext: mockExtensionContext,
         webviewPath: mockWebviewPath,
       });
+      const registeredCommandIds = mockRegisterCommand.mock.calls.map(([commandId]) => commandId);
 
-      expect(disposables).toHaveLength(7);
       expect(mockRegisterCustomEditorProvider).toHaveBeenCalledWith("diffViewer", expect.any(DiffViewerProvider), {
         webviewOptions: {
           retainContextWhenHidden: true,
@@ -252,12 +252,19 @@ describe("DiffViewerProvider", () => {
         },
         supportsMultipleEditorsPerDocument: false,
       });
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showLineByLine", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showSideBySide", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.expandAll", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.collapseAll", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.showRaw", expect.any(Function));
-      expect(mockRegisterCommand).toHaveBeenCalledWith("diffviewer.openCollapsed", expect.any(Function));
+      expect(registeredCommandIds).toEqual([
+        "diffviewer.showLineByLine",
+        "diffviewer.showSideBySide",
+        "diffviewer.expandAll",
+        "diffviewer.collapseAll",
+        "diffviewer.showRaw",
+        "diffviewer.openCollapsed",
+        "diffviewer._captureActiveTestState",
+        "diffviewer._runActiveTestAction",
+      ]);
+      for (const commandId of registeredCommandIds) {
+        expect(mockRegisterCommand).toHaveBeenCalledWith(commandId, expect.any(Function));
+      }
     });
 
     it.each([
@@ -404,6 +411,142 @@ describe("DiffViewerProvider", () => {
 
       expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
     });
+
+    it("should capture test state from the active webview context", async () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] === "diffviewer._captureActiveTestState")?.[1];
+      const registeredProvider = mockRegisterCustomEditorProvider.mock.calls[0]?.[1] as DiffViewerProvider;
+      const activePanel = {
+        active: true,
+        visible: true,
+        webview: {
+          postMessage: jest.fn(),
+        },
+      } as unknown as vscode.WebviewPanel;
+      const expectedState = {
+        isReady: true,
+        shellGeneration: 1,
+        outputFormat: "line-by-line",
+        fileCount: 1,
+        filePaths: ["src/file.ts"],
+        fileHeaders: ["src/file.ts"],
+        fileListVisible: true,
+        collapsedFilePaths: [],
+        scrollbarVisible: false,
+        inlineHighlightCount: 0,
+        lightHighlightDisabled: false,
+        darkHighlightDisabled: true,
+        codeLineTexts: ["content"],
+      };
+
+      Reflect.set(registeredProvider, "activeWebviewContext", {
+        panel: activePanel,
+        document: mockTextDocument,
+        viewedStateStore: mockViewedStateStore,
+        isDisposed: false,
+        renderRequestId: 0,
+        shellInitialized: true,
+        shellGeneration: 1,
+        webviewReady: true,
+      });
+
+      const testStatePromise = command();
+      expect(activePanel.webview.postMessage).toHaveBeenCalledWith({
+        kind: "captureTestState",
+        payload: { requestId: "test-state-1" },
+      });
+
+      (
+        registeredProvider as unknown as {
+          onTestStateReported: (
+            webviewContext: unknown,
+            payload: { requestId: string; state: typeof expectedState },
+          ) => void;
+        }
+      ).onTestStateReported(Reflect.get(registeredProvider, "activeWebviewContext"), {
+        requestId: "test-state-1",
+        state: expectedState,
+      });
+
+      await expect(testStatePromise).resolves.toEqual(expectedState);
+    });
+
+    it("should fail test state capture when there is no active webview context", async () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] === "diffviewer._captureActiveTestState")?.[1];
+      expect(command).toBeDefined();
+
+      await expect(command()).rejects.toThrow("No active webview available to capture test state.");
+    });
+
+    it("should run a test action against the active webview context", async () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] === "diffviewer._runActiveTestAction")?.[1];
+      const registeredProvider = mockRegisterCustomEditorProvider.mock.calls[0]?.[1] as DiffViewerProvider;
+      const activePanel = {
+        active: true,
+        visible: true,
+        webview: {
+          postMessage: jest.fn(),
+        },
+      } as unknown as vscode.WebviewPanel;
+
+      Reflect.set(registeredProvider, "activeWebviewContext", {
+        panel: activePanel,
+        document: mockTextDocument,
+        viewedStateStore: mockViewedStateStore,
+        isDisposed: false,
+        renderRequestId: 0,
+        shellInitialized: true,
+        shellGeneration: 1,
+        webviewReady: true,
+      });
+
+      const actionPromise = command({ kind: "clickFileName", path: "src/file.ts" });
+      expect(activePanel.webview.postMessage).toHaveBeenCalledWith({
+        kind: "runTestAction",
+        payload: {
+          requestId: "test-action-1",
+          action: { kind: "clickFileName", path: "src/file.ts" },
+        },
+      });
+
+      (
+        registeredProvider as unknown as {
+          onTestActionResultReported: (webviewContext: unknown, payload: { requestId: string; error?: string }) => void;
+        }
+      ).onTestActionResultReported(Reflect.get(registeredProvider, "activeWebviewContext"), {
+        requestId: "test-action-1",
+      });
+
+      await expect(actionPromise).resolves.toBeUndefined();
+    });
+
+    it("should fail test actions when there is no active webview context", async () => {
+      DiffViewerProvider.registerContributions({
+        extensionContext: mockExtensionContext,
+        webviewPath: mockWebviewPath,
+      });
+
+      const command = mockRegisterCommand.mock.calls.find((c) => c[0] === "diffviewer._runActiveTestAction")?.[1];
+      expect(command).toBeDefined();
+
+      await expect(command({ kind: "clickFileName", path: "src/file.ts" })).rejects.toThrow(
+        "No active webview available to run test action.",
+      );
+    });
   });
 
   describe("resolveCustomTextEditor", () => {
@@ -450,6 +593,8 @@ describe("DiffViewerProvider", () => {
         viewedStateStore: expect.any(Object),
         onWebviewActionRequested: expect.any(Function),
         onReadyReceived: expect.any(Function),
+        onTestStateReported: expect.any(Function),
+        onTestActionResultReported: expect.any(Function),
       });
     });
 

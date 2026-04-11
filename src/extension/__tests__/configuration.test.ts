@@ -89,6 +89,48 @@ describe("configuration", () => {
     expect(config.globalScrollbar).toBe(true);
   });
 
+  it("should preserve explicit words matching", () => {
+    mockGet.mockImplementation((key: string, fallback: unknown) => {
+      if (key === "matching") {
+        return "words";
+      }
+      return fallback;
+    });
+
+    const config = extractConfig();
+
+    expect(config.diff2html.matching).toBe("words");
+  });
+
+  it("should preserve explicit lines matching", () => {
+    mockGet.mockImplementation((key: string, fallback: unknown) => {
+      if (key === "matching") {
+        return "lines";
+      }
+      return fallback;
+    });
+
+    const config = extractConfig();
+
+    expect(config.diff2html.matching).toBe("lines");
+  });
+
+  it.each([
+    ["word", "words"],
+    ["char", "lines"],
+  ])("should normalize legacy %s matching", (legacyValue, expectedValue) => {
+    mockGet.mockImplementation((key: string, fallback: unknown) => {
+      if (key === "matching") {
+        return legacyValue;
+      }
+      return fallback;
+    });
+
+    const config = extractConfig();
+
+    expect(config.diff2html.matching).toBe(expectedValue);
+  });
+
   it("should report when auto color scheme mode is enabled", () => {
     expect(isAutoColorScheme()).toBe(true);
   });

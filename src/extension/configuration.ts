@@ -23,6 +23,7 @@ type RequiredConfigIds = (typeof requiredConfigSections)[keyof typeof requiredCo
 
 export type RequiredDiff2HtmlConfig = Required<Pick<Diff2HtmlConfig, RequiredConfigIds>>;
 export type ColorSchemeSetting = ColorSchemeType | "auto";
+type LineMatchingSetting = LineMatchingType | "word" | "char";
 
 export type AppConfig = {
   diff2html: RequiredDiff2HtmlConfig;
@@ -56,7 +57,7 @@ export function extractConfig(): AppConfig {
         DEFAULT_CONFIG.diff2html.outputFormat,
       ),
       drawFileList: config.get<boolean>(requiredConfigSections.drawFileList, DEFAULT_CONFIG.diff2html.drawFileList),
-      matching: config.get<LineMatchingType>(requiredConfigSections.matching, DEFAULT_CONFIG.diff2html.matching),
+      matching: getLineMatchingSetting(config),
       matchWordsThreshold: config.get<number>(
         requiredConfigSections.matchWordsThreshold,
         DEFAULT_CONFIG.diff2html.matchWordsThreshold,
@@ -92,6 +93,23 @@ export function setOutputFormatConfig(value: OutputFormatType): Thenable<void> {
 
 function getColorSchemeSetting(config: vscode.WorkspaceConfiguration): ColorSchemeSetting {
   return config.get<ColorSchemeSetting>(requiredConfigSections.colorScheme, "auto");
+}
+
+function getLineMatchingSetting(config: vscode.WorkspaceConfiguration): LineMatchingType {
+  const setting = config.get<LineMatchingSetting>(requiredConfigSections.matching, DEFAULT_CONFIG.diff2html.matching);
+
+  switch (setting) {
+    case "word":
+      return "words";
+    case "char":
+      return "lines";
+    case "words":
+    case "lines":
+    case "none":
+      return setting;
+    default:
+      return DEFAULT_CONFIG.diff2html.matching;
+  }
 }
 
 function resolveColorScheme(setting: ColorSchemeSetting): ColorSchemeType {

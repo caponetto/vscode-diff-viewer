@@ -102,6 +102,7 @@
         "properties": {
           "diffviewer.colorScheme": {
             "type": "string",
+            "scope": "resource",
             "default": "auto",
             "enum": [
               "auto",
@@ -112,6 +113,7 @@
           },
           "diffviewer.outputFormat": {
             "type": "string",
+            "scope": "resource",
             "default": "line-by-line",
             "enum": [
               "line-by-line",
@@ -121,51 +123,59 @@
           },
           "diffviewer.globalScrollbar": {
             "type": "boolean",
+            "scope": "resource",
             "default": false,
             "markdownDescription": "Show a sticky horizontal scrollbar below the viewed summary for wide diffs."
           },
           "diffviewer.drawFileList": {
             "type": "boolean",
+            "scope": "resource",
             "default": true,
             "markdownDescription": "Show the file summary list above the rendered diff."
           },
           "diffviewer.matching": {
             "type": "string",
+            "scope": "resource",
             "default": "none",
             "enum": [
-              "word",
-              "char",
+              "words",
+              "lines",
               "none"
             ],
             "markdownDescription": "Granularity used to highlight inline changes."
           },
           "diffviewer.matchWordsThreshold": {
             "type": "number",
+            "scope": "resource",
             "default": 0.25,
             "minimum": 0,
             "maximum": 1,
-            "markdownDescription": "Similarity threshold used when `diffviewer.matching` is set to `word`."
+            "markdownDescription": "Similarity threshold used when `diffviewer.matching` is set to `words`."
           },
           "diffviewer.matchingMaxComparisons": {
             "type": "integer",
+            "scope": "resource",
             "default": 2500,
             "minimum": 0,
             "markdownDescription": "Maximum number of comparisons performed while matching changed lines inside a block."
           },
           "diffviewer.maxLineSizeInBlockForComparison": {
             "type": "integer",
+            "scope": "resource",
             "default": 200,
             "minimum": 0,
             "markdownDescription": "Maximum line length allowed when comparing lines inside a changed block."
           },
           "diffviewer.maxLineLengthHighlight": {
             "type": "integer",
+            "scope": "resource",
             "default": 10000,
             "minimum": 0,
             "markdownDescription": "Only highlight inline changes for lines shorter than this limit."
           },
           "diffviewer.renderNothingWhenEmpty": {
             "type": "boolean",
+            "scope": "resource",
             "default": false,
             "markdownDescription": "Render no file output when a comparison produces no visible changes."
           }
@@ -224,7 +234,10 @@
     "format:check:staged": "node ./scripts/check-staged-format.mjs",
     "pack:extension": "vsce package -o ./dist/vscode_diff_viewer_v$npm_package_version.vsix --githubBranch main",
     "run:webmode": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --quality stable --esm",
+    "smoke:fixtures": "node ./smoke/fixtures/generate.mjs",
     "smoke:web": "node ./scripts/smoke-web.mjs",
+    "test:integration:desktop": "node ./scripts/test-integration-desktop.mjs",
+    "test:all": "npm run jest:run -- && npm run test:integration:desktop && npm run smoke:web",
     "jest:run": "jest --silent",
     "test": "npm run jest:run --",
     "test:coverage": "jest --coverage --silent",
@@ -242,6 +255,7 @@
     "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^8.25.0",
     "@typescript-eslint/parser": "^8.25.0",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/test-web": "^0.0.80",
     "@vscode/vsce": "^3.2.2",
     "css-loader": "^7.1.2",

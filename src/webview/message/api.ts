@@ -1,6 +1,7 @@
 import { DiffFile } from "diff2html/lib/types";
-import { AppConfig } from "../../extension/configuration";
+import type { AppConfig } from "../../extension/configuration";
 import { ViewedState } from "../../extension/viewed-state";
+import { MESSAGE_TO_WEBVIEW_TEST_KINDS, MessageToWebviewTestApi } from "./testing/api";
 
 export type ReviewAction = "expandAll" | "collapseAll";
 export type ExtensionAction = "showRaw";
@@ -26,14 +27,21 @@ export interface UpdateWebviewPayload {
   performance: WebviewPerformanceHints;
 }
 
-export interface MessageToWebviewApi {
+export interface MessageToWebviewRenderApi {
   prepare: () => void;
   updateWebview: (payload: UpdateWebviewPayload) => Promise<void>;
   performWebviewAction: (payload: { action: WebviewAction }) => void;
 }
 
-export const MESSAGE_TO_WEBVIEW_KINDS = [
+export interface MessageToWebviewApi extends MessageToWebviewRenderApi, MessageToWebviewTestApi {}
+
+export const MESSAGE_TO_WEBVIEW_RENDER_KINDS = [
   "prepare",
   "updateWebview",
   "performWebviewAction",
+] as const satisfies readonly (keyof MessageToWebviewRenderApi)[];
+
+export const MESSAGE_TO_WEBVIEW_KINDS = [
+  ...MESSAGE_TO_WEBVIEW_RENDER_KINDS,
+  ...MESSAGE_TO_WEBVIEW_TEST_KINDS,
 ] as const satisfies readonly (keyof MessageToWebviewApi)[];
