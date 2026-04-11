@@ -6,17 +6,26 @@ import { APP_CONFIG_SECTION, extractConfig, isAutoColorScheme, setOutputFormatCo
 import { MessageToExtensionHandlerImpl } from "../message/handler";
 import { ViewedStateStore } from "../viewed-state";
 import { WebviewAction } from "../../webview/message/api";
+import { WebviewTestAction, WebviewTestState } from "../../webview/message/testing/api";
 import { collectAccessiblePaths, clearAccessiblePathsCache } from "./paths";
 import { createRenderPlan, isActiveRenderRequest } from "./rendering";
 import { ensureWebviewShell } from "./shell";
+import { DiffViewerProviderTestSupport } from "./testing/support";
 import { DiffViewerProviderArgs, RenderedWebviewData, WebviewContext } from "./types";
 
 export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
   private static readonly VIEW_TYPE = "diffViewer";
   private activeWebviewContext: WebviewContext | undefined;
   private readonly webviewContexts = new Set<WebviewContext>();
+  private readonly testSupport: DiffViewerProviderTestSupport;
 
-  public constructor(private readonly args: DiffViewerProviderArgs) {}
+  public constructor(private readonly args: DiffViewerProviderArgs) {
+    this.testSupport = new DiffViewerProviderTestSupport({
+      getTargetWebviewContext: () => this.getTargetWebviewContext(),
+      postMessageToWebview: (messageArgs) => this.postMessageToWebviewWrapper(messageArgs),
+      timeoutMs: 5_000,
+    });
+  }
 
   public static registerContributions(args: DiffViewerProviderArgs): vscode.Disposable[] {
     const provider = new DiffViewerProvider(args);
@@ -40,6 +49,10 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
           await vscode.commands.executeCommand("vscode.openWith", collapsedUri, "diffViewer");
         }
       }),
+      vscode.commands.registerCommand("diffviewer._captureActiveTestState", () => provider.captureActiveTestState()),
+      vscode.commands.registerCommand("diffviewer._runActiveTestAction", (action) =>
+        provider.runActiveTestAction(action),
+      ),
     ];
   }
 
@@ -149,6 +162,11 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
     );
 
     args.webviewContext.panel.onDidDispose(() => {
+      this.testSupport.rejectPendingRequests({
+        webviewContext: args.webviewContext,
+        testStateMessage: "Webview disposed before test state was captured.",
+        testActionMessage: "Webview disposed before test action completed.",
+      });
       this.webviewContexts.delete(args.webviewContext);
       if (this.activeWebviewContext === args.webviewContext) {
         this.activeWebviewContext = this.getTargetWebviewContext();
@@ -192,6 +210,12 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       },
       onReadyReceived: (payload) => {
         this.onWebviewReady(args.webviewContext, payload);
+      },
+      onTestStateReported: (payload) => {
+        this.testSupport.onTestStateReported(args.webviewContext, payload);
+      },
+      onTestActionResultReported: (payload) => {
+        this.testSupport.onTestActionResultReported(args.webviewContext, payload);
       },
     });
   }
@@ -392,5 +416,27 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
         payload: { action },
       },
     });
+  }
+
+  private captureActiveTestState() {
+    return this.testSupport.captureActiveTestState();
+  }
+
+  private onTestStateReported(
+    webviewContext: WebviewContext,
+    payload: { requestId: string; state: WebviewTestState },
+  ): void {
+    this.testSupport.onTestStateReported(webviewContext, payload);
+  }
+
+  private runActiveTestAction(action: WebviewTestAction) {
+    return this.testSupport.runActiveTestAction(action);
+  }
+
+  private onTestActionResultReported(
+    webviewContext: WebviewContext,
+    payload: { requestId: string; error?: string },
+  ): void {
+    this.testSupport.onTestActionResultReported(webviewContext, payload);
   }
 }

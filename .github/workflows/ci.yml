@@ -48,6 +48,10 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: npm run smoke:web
 
+      - name: "Desktop Integration Test (Ubuntu only)"
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a npm run test:integration:desktop
+
       - name: "Pack extension (Ubuntu only)"
         if: matrix.os == 'ubuntu-latest'
         run: npm run pack:extension

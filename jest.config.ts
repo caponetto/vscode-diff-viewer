@@ -18,10 +18,10 @@ export default async (): Promise<Config.InitialOptions> => {
     coverageReporters: ["text", "lcov", "html", "json"],
     coverageThreshold: {
       global: {
-        branches: 60,
-        functions: 60,
-        lines: 60,
-        statements: 60,
+        branches: 70,
+        functions: 90,
+        lines: 85,
+        statements: 85,
       },
     },
   };
