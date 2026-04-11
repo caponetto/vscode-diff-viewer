@@ -1,4 +1,4 @@
-# Diff Viewer extension for VS Code 🔍
+# Diff Viewer extension for VS Code
 
 [![vs-code-marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=caponetto.vscode-diff-viewer)
 [![changelog](https://img.shields.io/badge/Version-History-2EA043)](./CHANGELOG.md)
