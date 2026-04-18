@@ -63,6 +63,15 @@ const setElementRect = (element: HTMLElement, rect: { left: number; width: numbe
   });
 };
 
+const createPointerEvent = (type: string, init: { clientX: number; pointerId: number }): PointerEvent => {
+  const event = new MouseEvent(type, { bubbles: true, clientX: init.clientX }) as PointerEvent;
+  Object.defineProperty(event, "pointerId", {
+    configurable: true,
+    value: init.pointerId,
+  });
+  return event;
+};
+
 const createSideBySideBinding = (): { binding: FileDomBinding; sideDiffs: HTMLElement[] } => {
   const fileContainer = document.createElement("div");
   fileContainer.innerHTML = `
@@ -80,6 +89,25 @@ const createSideBySideBinding = (): { binding: FileDomBinding; sideDiffs: HTMLEl
       filePath: "src/file.ts",
     },
     sideDiffs,
+  };
+};
+
+const createInlineBinding = (): { binding: FileDomBinding; content: HTMLElement } => {
+  const fileContainer = document.createElement("div");
+  fileContainer.innerHTML = `<div class="d2h-file-diff"></div>`;
+
+  const content = fileContainer.querySelector<HTMLElement>(".d2h-file-diff");
+  if (!content) {
+    throw new Error("Expected inline diff content to be rendered.");
+  }
+
+  return {
+    binding: {
+      fileContainer,
+      fileNameText: "file.ts",
+      filePath: "src/file.ts",
+    },
+    content,
   };
 };
 
@@ -166,6 +194,70 @@ describe("HorizontalScrollbarController", () => {
     expect(scrollbar.style.display).toBe("none");
   });
 
+  it("hides the scrollbar when all file panes are collapsed and the page does not overflow", () => {
+    const binding = createSideBySideBinding();
+    fileBindings = [binding.binding];
+    const fileContent = binding.binding.fileContainer.querySelector<HTMLElement>(".d2h-file-diff");
+    fileContent?.classList.add("d2h-d-none");
+    binding.sideDiffs.forEach((element) => setElementDimensions(element, { clientWidth: 120, scrollWidth: 420 }));
+
+    const root = document.documentElement;
+    Object.defineProperty(document, "scrollingElement", {
+      configurable: true,
+      value: root,
+    });
+    setElementDimensions(root, { clientWidth: 300, scrollWidth: 300 });
+
+    controller.refresh();
+
+    const scrollbar = document.getElementById(SkeletonElementIds.HorizontalScrollbarContainer) as HTMLDivElement;
+    const thumb = document.getElementById(SkeletonElementIds.HorizontalScrollbarContent) as HTMLDivElement;
+    expect(scrollbar.style.display).toBe("none");
+    expect(thumb.style.width).toBe("0px");
+  });
+
+  it("uses the whole file content as the target when no side-by-side pane overflows", () => {
+    const binding = createInlineBinding();
+    fileBindings = [binding.binding];
+    setElementDimensions(binding.content, { clientWidth: 140, scrollWidth: 560 });
+
+    const scrollbar = document.getElementById(SkeletonElementIds.HorizontalScrollbarContainer) as HTMLDivElement;
+    const thumb = document.getElementById(SkeletonElementIds.HorizontalScrollbarContent) as HTMLDivElement;
+    setElementDimensions(scrollbar, { clientWidth: 140, scrollWidth: 140 });
+
+    controller.refresh();
+
+    expect(scrollbar.style.display).toBe("block");
+    expect(thumb.style.width).toBe("35px");
+
+    scrollbar.scrollLeft = 70;
+    scrollbar.dispatchEvent(new Event("scroll"));
+    expect(binding.content.scrollLeft).toBe(70);
+  });
+
+  it("updates scroll listeners when the active file targets change", () => {
+    const first = createInlineBinding();
+    const second = createInlineBinding();
+    fileBindings = [first.binding];
+    setElementDimensions(first.content, { clientWidth: 100, scrollWidth: 300 });
+    setElementDimensions(second.content, { clientWidth: 100, scrollWidth: 300 });
+
+    const scrollbar = document.getElementById(SkeletonElementIds.HorizontalScrollbarContainer) as HTMLDivElement;
+    setElementDimensions(scrollbar, { clientWidth: 100, scrollWidth: 100 });
+
+    controller.refresh();
+    fileBindings = [second.binding];
+    controller.refresh();
+
+    first.content.scrollLeft = 80;
+    first.content.dispatchEvent(new Event("scroll"));
+    expect(scrollbar.scrollLeft).toBe(0);
+
+    second.content.scrollLeft = 60;
+    second.content.dispatchEvent(new Event("scroll"));
+    expect(scrollbar.scrollLeft).toBe(60);
+  });
+
   it("moves the thumb and scrolls targets when the track is clicked", () => {
     const binding = createSideBySideBinding();
     fileBindings = [binding.binding];
@@ -183,5 +275,69 @@ describe("HorizontalScrollbarController", () => {
 
     expect(binding.sideDiffs[0]?.scrollLeft).toBeGreaterThan(0);
     expect(thumb.style.transform).toContain("translateX");
+  });
+
+  it("drags the thumb until the matching pointer is released", () => {
+    const binding = createSideBySideBinding();
+    fileBindings = [binding.binding];
+    binding.sideDiffs.forEach((element) => setElementDimensions(element, { clientWidth: 120, scrollWidth: 420 }));
+
+    const scrollbar = document.getElementById(SkeletonElementIds.HorizontalScrollbarContainer) as HTMLDivElement;
+    const thumb = document.getElementById(SkeletonElementIds.HorizontalScrollbarContent) as HTMLDivElement;
+    const setPointerCapture = jest.fn();
+    const releasePointerCapture = jest.fn();
+    thumb.setPointerCapture = setPointerCapture;
+    thumb.releasePointerCapture = releasePointerCapture;
+    setElementDimensions(scrollbar, { clientWidth: 120, scrollWidth: 120 });
+    setElementRect(scrollbar, { left: 10, width: 120 });
+    setElementRect(thumb, { left: 20, width: 34.285714285714285 });
+
+    controller.refresh();
+
+    thumb.dispatchEvent(createPointerEvent("pointerdown", { clientX: 35, pointerId: 7 }));
+    thumb.dispatchEvent(createPointerEvent("pointermove", { clientX: 90, pointerId: 99 }));
+    expect(binding.sideDiffs[0]?.scrollLeft).toBe(0);
+
+    thumb.dispatchEvent(createPointerEvent("pointermove", { clientX: 90, pointerId: 7 }));
+    expect(binding.sideDiffs[0]?.scrollLeft).toBeGreaterThan(0);
+
+    thumb.dispatchEvent(createPointerEvent("pointerup", { clientX: 90, pointerId: 7 }));
+    const scrollLeftAfterRelease = binding.sideDiffs[0]?.scrollLeft;
+    thumb.dispatchEvent(createPointerEvent("pointermove", { clientX: 100, pointerId: 7 }));
+
+    expect(setPointerCapture).toHaveBeenCalledWith(7);
+    expect(releasePointerCapture).toHaveBeenCalledWith(7);
+    expect(binding.sideDiffs[0]?.scrollLeft).toBe(scrollLeftAfterRelease);
+  });
+
+  it("cancels an already scheduled refresh before scheduling the next one", () => {
+    const animationFrames = new Map<number, FrameRequestCallback>();
+    const animationFrameIds = [12, 24];
+    const requestAnimationFrame = jest
+      .spyOn(globalThis, "requestAnimationFrame")
+      .mockImplementation((callback: FrameRequestCallback): number => {
+        const frameId = animationFrameIds.shift() ?? 36;
+        animationFrames.set(frameId, callback);
+        return frameId;
+      });
+    const cancelAnimationFrame = jest.spyOn(globalThis, "cancelAnimationFrame").mockImplementation((frameId) => {
+      animationFrames.delete(frameId);
+    });
+
+    controller.scheduleRefresh();
+    expect(Reflect.get(controller, "pendingRefreshFrame")).toBe(12);
+
+    controller.scheduleRefresh();
+
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(12);
+    expect(Reflect.get(controller, "pendingRefreshFrame")).toBe(24);
+    expect(animationFrames.has(12)).toBe(false);
+
+    Array.from(animationFrames.values()).forEach((callback) => callback(0));
+
+    expect(Reflect.get(controller, "pendingRefreshFrame")).toBeUndefined();
+
+    requestAnimationFrame.mockRestore();
+    cancelAnimationFrame.mockRestore();
   });
 });

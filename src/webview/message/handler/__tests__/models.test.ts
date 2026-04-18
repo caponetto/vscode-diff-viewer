@@ -42,6 +42,39 @@ describe("message/handler/models", () => {
     expect(viewModel.isNewPathAccessible).toBe(true);
   });
 
+  it("uses the old path when a file was deleted and ignores inaccessible paths when hashing", async () => {
+    const diffFiles = [
+      createDiffFile({ oldName: "src/deleted.ts", newName: "/dev/null" }),
+      createDiffFile({ oldName: "/dev/null", newName: "src/inaccessible.ts" }),
+    ];
+    const accessiblePaths = new Set(["src/deleted.ts"]);
+    const deletedViewModel = buildDiffFileViewModel(diffFiles[0], accessiblePaths);
+    const currentDiffFilesByPath = buildDiffFileMap(diffFiles, accessiblePaths);
+
+    const hashes = await buildDiffHashes({
+      payload: {
+        config: {} as never,
+        diffFiles,
+        accessiblePaths: ["src/deleted.ts"],
+        viewedState: { "src/deleted.ts": "old-sha", "src/missing.ts": "missing-sha" },
+        collapseAll: false,
+        performance: { isLargeDiff: true, deferViewedStateHashing: true },
+      },
+      currentDiffFilesByPath,
+      accessiblePaths,
+    });
+
+    expect(deletedViewModel).toMatchObject({
+      primaryPath: "src/deleted.ts",
+      oldPath: "src/deleted.ts",
+      newPath: undefined,
+      isOldPathAccessible: true,
+      isNewPathAccessible: false,
+    });
+    expect(Object.keys(currentDiffFilesByPath)).toEqual(["src/deleted.ts", "src/inaccessible.ts"]);
+    expect(Object.keys(hashes)).toEqual(["src/deleted.ts"]);
+  });
+
   it("builds a diff file map and hashes", async () => {
     const diffFiles = [
       createDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" }),
