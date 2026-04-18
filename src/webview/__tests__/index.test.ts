@@ -69,6 +69,27 @@ describe("webview/index", () => {
     expect(setState).toHaveBeenCalledWith({ scrollTop: 99 });
   });
 
+  it("falls back to empty state and shell generation zero when VS Code has no saved state", async () => {
+    getState.mockReturnValue(null);
+    Object.defineProperty(document, "body", {
+      value: { dataset: { shellGeneration: "not-a-number" } },
+      configurable: true,
+    });
+
+    let mockedHandlerConstructor: jest.Mock;
+    jest.isolateModules(() => {
+      mockedHandlerConstructor = require("../message/handler").MessageToWebviewHandlerImpl as jest.Mock;
+      mockedHandlerConstructor.mockImplementation(() => ({
+        onMessageReceived,
+      }));
+      require("../index");
+    });
+
+    const args = mockedHandlerConstructor!.mock.calls[0]?.[0];
+    expect(args?.state.getState()).toBeUndefined();
+    expect(postMessage).toHaveBeenCalledWith({ kind: "ready", payload: { shellGeneration: 0 } });
+  });
+
   it("ignores messages from a different origin", async () => {
     let mockedIsMessageToWebview: jest.Mock;
     jest.isolateModules(() => {

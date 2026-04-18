@@ -11,11 +11,58 @@ import { MessageToWebviewHandlerImpl } from "..";
 import { getSha1Hash } from "../../hash";
 
 jest.mock("diff2html/lib/ui/js/diff2html-ui-slim.js", () => ({
-  Diff2HtmlUI: jest.fn().mockImplementation((container: HTMLElement, diffFiles: DiffFile[]) => ({
-    draw: jest.fn(() => {
-      container.innerHTML = diffFiles
-        .map(
-          (diffFile) => `
+  Diff2HtmlUI: jest
+    .fn()
+    .mockImplementation((container: HTMLElement, diffFiles: DiffFile[], config: AppConfig["diff2html"]) => ({
+      draw: jest.fn(() => {
+        container.innerHTML = diffFiles
+          .map((diffFile) => {
+            const fileBody =
+              config.outputFormat === "line-by-line"
+                ? `
+                <div class="d2h-file-diff">
+                  <table>
+                    <tr>
+                      <td class="d2h-code-linenumber d2h-del">
+                        <div class="line-num2">10</div>
+                      </td>
+                      <td class="d2h-code-line">removed</td>
+                    </tr>
+                    <tr>
+                      <td class="d2h-code-linenumber d2h-ins">
+                        <div class="line-num2">24</div>
+                      </td>
+                      <td class="d2h-code-line">added</td>
+                    </tr>
+                    <tr>
+                      <td class="d2h-code-linenumber d2h-info">
+                        <div class="line-num2">...</div>
+                      </td>
+                      <td class="d2h-code-line">info</td>
+                    </tr>
+                  </table>
+                </div>`
+                : `
+                <div class="d2h-file-diff">
+                  <div class="d2h-file-side-diff">
+                    <table>
+                      <tr>
+                        <td class="d2h-code-side-linenumber d2h-cntx">11</td>
+                        <td class="d2h-code-line">left</td>
+                      </tr>
+                    </table>
+                  </div>
+                  <div class="d2h-file-side-diff">
+                    <table>
+                      <tr>
+                        <td class="d2h-code-side-linenumber d2h-cntx">12</td>
+                        <td class="d2h-code-line">content</td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>`;
+
+            return `
             <div class="d2h-file-wrapper">
               <div class="d2h-file-header">
                 <a class="d2h-file-name">${diffFile.newName ?? diffFile.oldName ?? ""}</a>
@@ -23,29 +70,12 @@ jest.mock("diff2html/lib/ui/js/diff2html-ui-slim.js", () => ({
                   <input class="d2h-file-collapse-input" type="checkbox" />
                 </label>
               </div>
-              <div class="d2h-file-diff">
-                <div class="d2h-file-side-diff">
-                  <table>
-                    <tr>
-                      <td class="d2h-code-side-linenumber d2h-cntx">11</td>
-                      <td class="d2h-code-line">left</td>
-                    </tr>
-                  </table>
-                </div>
-                <div class="d2h-file-side-diff">
-                  <table>
-                    <tr>
-                      <td class="d2h-code-side-linenumber d2h-cntx">12</td>
-                      <td class="d2h-code-line">content</td>
-                    </tr>
-                  </table>
-                </div>
-              </div>
-            </div>`,
-        )
-        .join("");
-    }),
-  })),
+              ${fileBody}
+            </div>`;
+          })
+          .join("");
+      }),
+    })),
 }));
 
 jest.mock("../../hash", () => ({
@@ -512,6 +542,42 @@ describe("MessageToWebviewHandlerImpl", () => {
     expect(postMessageToExtensionFn).toHaveBeenCalledWith({
       kind: "openFile",
       payload: { path: "src/file.ts", line: 12 },
+    });
+  });
+
+  it("opens right-side line-by-line numbers and ignores deleted or info rows", async () => {
+    const baseConfig = createConfig();
+
+    await handler.updateWebview(
+      createUpdatePayload({
+        config: {
+          ...baseConfig,
+          diff2html: {
+            ...baseConfig.diff2html,
+            outputFormat: "line-by-line",
+          },
+        },
+        diffFiles: [createMockDiffFile({ oldName: "src/file.ts", newName: "src/file.ts" })],
+        accessiblePaths: ["src/file.ts"],
+        viewedState: {},
+        collapseAll: false,
+        performance: { isLargeDiff: false, deferViewedStateHashing: false },
+      }),
+    );
+
+    const [deletedLineNumber, addedLineNumber, infoLineNumber] = Array.from(
+      document.querySelectorAll<HTMLElement>(".d2h-code-linenumber"),
+    );
+
+    deletedLineNumber?.click();
+    infoLineNumber?.click();
+    expect(postMessageToExtensionFn).not.toHaveBeenCalledWith(expect.objectContaining({ kind: "openFile" }));
+
+    addedLineNumber?.click();
+
+    expect(postMessageToExtensionFn).toHaveBeenCalledWith({
+      kind: "openFile",
+      payload: { path: "src/file.ts", line: 24 },
     });
   });
 
