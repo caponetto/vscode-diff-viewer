@@ -40,12 +40,17 @@ Diff Viewer renders `.diff` and `.patch` files inside VS Code with [diff2html](h
 
 If you prefer a persistent horizontal scrollbar for wide side-by-side diffs, enable `diffviewer.globalScrollbar`. Viewed state is stored per diff document. If a file's diff changes later, the extension expands it again and marks it as changed since the last view. File header actions are only shown for paths the extension can currently resolve.
 
+### Find in a diff
+
+Press `Ctrl+F` (`Cmd+F` on macOS) or use the search button in the editor title bar. Search highlights literal matches in visible code and file names, including text split across syntax-highlight spans. Use `Enter` / `Shift+Enter` for the next / previous match, `Aa` to match case, and `Escape` to close. Expand collapsed files to include their code in the search.
+
 ## Commands ⌘
 
 - `Show diff line by line`
 - `Show diff side by side`
 - `Expand all files`
 - `Collapse all files`
+- `Find in diff`
 - `Show raw file`
 - `Open diff collapsed (all viewed)` from the Explorer context menu on `.diff` and `.patch` files
 

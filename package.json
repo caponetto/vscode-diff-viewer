@@ -70,6 +70,11 @@
         "command": "diffviewer.showRaw",
         "title": "Show raw file",
         "icon": "$(go-to-file)"
+      },
+      {
+        "command": "diffviewer.find",
+        "title": "Find in diff",
+        "icon": "$(search)"
       }
     ],
     "customEditors": [
@@ -221,9 +226,22 @@
           "command": "diffviewer.showRaw",
           "group": "navigation@1",
           "when": "activeCustomEditorId == 'diffViewer'"
+        },
+        {
+          "command": "diffviewer.find",
+          "group": "navigation@2",
+          "when": "activeCustomEditorId == 'diffViewer'"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "diffviewer.find",
+        "key": "ctrl+f",
+        "mac": "cmd+f",
+        "when": "activeCustomEditorId == 'diffViewer' && !terminalFocus"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint ./src --ext .ts",

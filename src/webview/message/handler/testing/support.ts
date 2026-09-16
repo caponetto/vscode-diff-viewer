@@ -45,6 +45,19 @@ export class WebviewHandlerTestSupport {
   }
 
   private async executeTestAction(action: WebviewTestAction): Promise<void> {
+    if (action.kind === "find" || action.kind === "findKey") {
+      const input = document.querySelector<HTMLInputElement>('#diff-find-widget input[type="text"]');
+      if (!input) throw new Error("Find widget is not open");
+      if (action.kind === "find") {
+        input.value = action.query;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      } else {
+        input.dispatchEvent(
+          new KeyboardEvent("keydown", { key: action.key, shiftKey: action.shiftKey, bubbles: true }),
+        );
+      }
+      return;
+    }
     const binding = this.args.getFileBindings().find((candidate) => candidate.filePath === action.path);
     if (!binding) {
       throw new Error(`No rendered file binding found for ${action.path}.`);
@@ -122,6 +135,11 @@ export class WebviewHandlerTestSupport {
       diffContainer?.querySelectorAll(".d2h-code-line .d2h-change, .d2h-code-side-line .d2h-change").length ?? 0;
 
     return {
+      findOpen: Boolean(
+        document.getElementById("diff-find-widget") && !document.getElementById("diff-find-widget")!.hidden,
+      ),
+      findCount: document.querySelector("#diff-find-widget span")?.textContent ?? undefined,
+      findHighlights: globalThis.CSS?.highlights?.get("diff-find")?.size,
       isReady: Boolean(currentConfig),
       shellGeneration: Number(document.body.dataset.shellGeneration ?? "0"),
       outputFormat: currentConfig?.diff2html.outputFormat,

@@ -5,7 +5,7 @@ import { MESSAGE_TO_WEBVIEW_TEST_KINDS, MessageToWebviewTestApi } from "./testin
 
 export type ReviewAction = "expandAll" | "collapseAll";
 export type ExtensionAction = "showRaw";
-export type WebviewAction = ReviewAction | ExtensionAction;
+export type WebviewAction = ReviewAction | ExtensionAction | "find";
 
 export interface WebviewUiState {
   scrollTop: number;
