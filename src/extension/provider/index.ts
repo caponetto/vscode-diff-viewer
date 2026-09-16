@@ -34,12 +34,14 @@ export class DiffViewerProvider implements vscode.CustomTextEditorProvider {
       vscode.window.registerCustomEditorProvider(DiffViewerProvider.VIEW_TYPE, provider, {
         webviewOptions: {
           retainContextWhenHidden: true,
-          enableFindWidget: true,
+          // The built-in webview find widget restores the editor when the terminal is maximized.
+          enableFindWidget: false,
         },
         supportsMultipleEditorsPerDocument: false,
       }),
       vscode.commands.registerCommand("diffviewer.showLineByLine", () => setOutputFormatConfig("line-by-line")),
       vscode.commands.registerCommand("diffviewer.showSideBySide", () => setOutputFormatConfig("side-by-side")),
+      vscode.commands.registerCommand("diffviewer.find", () => provider.performWebviewAction("find")),
       vscode.commands.registerCommand("diffviewer.expandAll", () => provider.performWebviewAction("expandAll")),
       vscode.commands.registerCommand("diffviewer.collapseAll", () => provider.performWebviewAction("collapseAll")),
       vscode.commands.registerCommand("diffviewer.showRaw", () => provider.performWebviewAction("showRaw")),

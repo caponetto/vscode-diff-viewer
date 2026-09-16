@@ -40,3 +40,12 @@ globalThis.addEventListener("message", (event: MessageEvent<MessageToWebview>) =
     // ignore malformed or unknown messages posted to the webview
   }
 });
+
+// Handle Find while focus is inside the iframe as well as the editor command.
+globalThis.addEventListener("keydown", (event: KeyboardEvent) => {
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "f") {
+    event.preventDefault();
+    event.stopPropagation();
+    messageReceivedHandler.performWebviewAction({ action: "find" });
+  }
+});
