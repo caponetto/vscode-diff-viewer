@@ -1,3 +1,4 @@
+import { FindController } from "./find";
 import { ColorSchemeType, DiffFile } from "diff2html/lib/types";
 import { Diff2HtmlUI } from "diff2html/lib/ui/js/diff2html-ui-slim.js";
 import { AppConfig } from "../../../extension/configuration";
@@ -26,6 +27,7 @@ import {
 import { setupTheme, showEmpty, showLoading, updateFooter, updateHighlightTheme, updateLargeDiffNotice } from "./ui";
 
 export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl implements MessageToWebviewHandler {
+  private readonly findController = new FindController();
   private currentConfig: AppConfig | undefined = undefined;
   private accessiblePaths = new Set<string>();
   private currentDiffHashes: Record<string, string> = {};
@@ -117,11 +119,15 @@ export class MessageToWebviewHandlerImpl extends GenericMessageHandlerImpl imple
       diffContainer.style.display = "block";
       this.horizontalScrollbarController.refresh();
       this.horizontalScrollbarController.scheduleRefresh();
+      this.findController.refresh();
     });
   }
 
   public performWebviewAction(payload: { action: WebviewAction }): void {
     switch (payload.action) {
+      case "find":
+        this.findController.open();
+        return;
       case "collapseAll":
         this.setAllViewedStates(true);
         this.clearChangedSinceViewedIndicators();

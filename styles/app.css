@@ -270,3 +270,51 @@ label.d2h-file-collapse.changed-since-last-view::after {
     opacity: 1;
   }
 }
+
+#diff-find-widget {
+  position: fixed;
+  top: 8px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 32px);
+  padding: 8px;
+  color: var(--vscode-editorWidget-foreground);
+  background: var(--vscode-editorWidget-background);
+  border: 1px solid var(--vscode-widget-border, #888);
+  box-shadow: 0 2px 8px var(--vscode-widget-shadow, #0005);
+}
+#diff-find-widget[hidden] {
+  display: none;
+}
+#diff-find-widget input[type="text"] {
+  min-width: 40px;
+  width: 190px;
+  padding: 4px;
+  color: var(--vscode-input-foreground);
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+}
+#diff-find-widget :focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+}
+#diff-find-widget span,
+#diff-find-widget label {
+  white-space: nowrap;
+}
+#diff-find-widget button {
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 4px;
+}
+::highlight(diff-find) {
+  background-color: var(--vscode-editor-findMatchHighlightBackground, #f0c04066);
+}
+::highlight(diff-find-current) {
+  background-color: var(--vscode-editor-findMatchBackground, #ea9d00);
+  color: var(--vscode-editor-findMatchForeground, #000);
+}

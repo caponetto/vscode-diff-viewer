@@ -358,6 +358,7 @@ async function run() {
   });
 
   await runConfigScenario({ sampleUri, matchingUri, wideUri, emptyUri });
+  await require("./search-and-maximize.cjs").run();
 }
 
 module.exports = {

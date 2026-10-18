@@ -248,13 +248,14 @@ describe("DiffViewerProvider", () => {
       expect(mockRegisterCustomEditorProvider).toHaveBeenCalledWith("diffViewer", expect.any(DiffViewerProvider), {
         webviewOptions: {
           retainContextWhenHidden: true,
-          enableFindWidget: true,
+          enableFindWidget: false,
         },
         supportsMultipleEditorsPerDocument: false,
       });
       expect(registeredCommandIds).toEqual([
         "diffviewer.showLineByLine",
         "diffviewer.showSideBySide",
+        "diffviewer.find",
         "diffviewer.expandAll",
         "diffviewer.collapseAll",
         "diffviewer.showRaw",
@@ -574,6 +575,29 @@ describe("DiffViewerProvider", () => {
       expect(mockWebview.options).toEqual({
         enableScripts: true,
       });
+    });
+
+    it("should preserve the webview when the terminal hides the editor and tab activity changes", async () => {
+      await provider.resolveCustomTextEditor(mockTextDocument, mockWebviewPanel, mockCancellationToken);
+      const constructorArgs = jest.mocked(MessageToExtensionHandlerImpl).mock.calls[0]?.[0];
+      constructorArgs?.onReadyReceived?.({ shellGeneration: 1 });
+      jest.runAllTimers();
+      const htmlBefore = mockWebview.html;
+      const htmlSetter = jest.fn();
+      Object.defineProperty(mockWebview, "html", { get: () => htmlBefore, set: htmlSetter });
+      jest.mocked(mockWebview.postMessage).mockClear();
+
+      Object.assign(mockWebviewPanel, { active: false, visible: false });
+      const onViewState = jest.mocked(mockWebviewPanel.onDidChangeViewState).mock.calls[0][0];
+      onViewState({ webviewPanel: mockWebviewPanel });
+      for (const [onTabsChanged] of jest.mocked(vscode.window.tabGroups.onDidChangeTabs).mock.calls) {
+        onTabsChanged({ opened: [], closed: [], changed: [] });
+      }
+      jest.runAllTimers();
+
+      expect(htmlSetter).not.toHaveBeenCalled();
+      expect(mockWebview.postMessage).not.toHaveBeenCalled();
+      expect(mockWebviewPanel.dispose).not.toHaveBeenCalled();
     });
 
     it("should create ViewedStateStore with correct parameters", async () => {

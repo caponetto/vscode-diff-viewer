@@ -2,6 +2,9 @@ import type { AppConfig } from "../../../extension/configuration";
 
 export interface WebviewTestState {
   isReady: boolean;
+  findOpen?: boolean;
+  findCount?: string;
+  findHighlights?: number;
   shellGeneration: number;
   outputFormat?: AppConfig["diff2html"]["outputFormat"];
   colorScheme?: AppConfig["diff2html"]["colorScheme"];
@@ -20,6 +23,8 @@ export interface WebviewTestState {
 }
 
 export type WebviewTestAction =
+  | { kind: "find"; query: string }
+  | { kind: "findKey"; key: string; shiftKey?: boolean }
   | { kind: "clickFileName"; path: string }
   | { kind: "clickLineNumber"; path: string; line: number }
   | { kind: "toggleViewed"; path: string; viewed: boolean };
